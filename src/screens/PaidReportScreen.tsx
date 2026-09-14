@@ -3,7 +3,7 @@ import { View, StyleSheet, Text, ScrollView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { useSession } from '../context/SessionContext';
-import { SecondaryButton, SectionCard } from '../components/ui';
+import { SecondaryButton, AccordionSection } from '../components/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, DISCLAIMER, tierFromScore } from '../theme/tiers';
 
@@ -27,6 +27,7 @@ export function PaidReportScreen({ navigation }: Props) {
   const tier = tierFromScore(result.skin_score.value);
   const bd = result.score_breakdown_paid;
   const perception = result.perception_scores;
+  const lifestyle = result.routine_paid.lifestyle_tips ?? [];
 
   return (
     <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
@@ -35,13 +36,24 @@ export function PaidReportScreen({ navigation }: Props) {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.brand}>Averie · 完整报告</Text>
-        <Text style={styles.bigScore}>{result.skin_score.value}</Text>
-        <Text style={[styles.tier, { color: tier.accent }]}>
-          {result.skin_score.tier_name} · {result.skin_type.label_zh}
-        </Text>
-        <Text style={styles.summary}>{result.report_paid.full_summary}</Text>
 
-        <SectionCard title="分项观感">
+        {/* 1. 总览 — default expanded */}
+        <AccordionSection title="总览" defaultExpanded>
+          <Text style={styles.bigScore}>{result.skin_score.value}</Text>
+          <Text style={[styles.tier, { color: tier.accent }]}>
+            {result.skin_score.tier_name} · {result.skin_type.label_zh}
+          </Text>
+          <Text style={styles.summary}>{result.report_paid.full_summary}</Text>
+          {result.concerns.map((c) => (
+            <View key={c.id} style={styles.concern}>
+              <Text style={styles.concernTitle}>{c.label_zh}</Text>
+              <Text style={styles.concernNote}>{c.note}</Text>
+            </View>
+          ))}
+        </AccordionSection>
+
+        {/* 2. 分项详解 */}
+        <AccordionSection title="分项详解">
           {perception.map((p) => (
             <View key={p.key} style={styles.percBlock}>
               <ScoreBar label={p.label_zh} value={p.value} />
@@ -51,34 +63,26 @@ export function PaidReportScreen({ navigation }: Props) {
               ) : null}
             </View>
           ))}
-        </SectionCard>
-
-        <SectionCard title="综合分项">
+          <Text style={styles.subHead}>综合分项</Text>
           <ScoreBar label="光泽观感" value={bd.glow} />
           <ScoreBar label="匀净度" value={bd.evenness} />
           <ScoreBar label="澄净度" value={bd.clarity} />
           <ScoreBar label="屏障观感" value={bd.barrier_appearance} />
-        </SectionCard>
+        </AccordionSection>
 
-        <SectionCard title="关注点">
-          {result.concerns.map((c) => (
-            <View key={c.id} style={styles.concern}>
-              <Text style={styles.concernTitle}>{c.label_zh}</Text>
-              <Text style={styles.concernNote}>{c.note}</Text>
-            </View>
-          ))}
-        </SectionCard>
-
-        <SectionCard title="分区说明">
+        {/* 3. 分区提示 */}
+        <AccordionSection title="分区提示">
           {result.report_paid.zone_notes.map((z) => (
             <View key={z.zone} style={styles.zone}>
               <Text style={styles.zoneTitle}>{z.zone_zh}</Text>
               <Text style={styles.zoneNote}>{z.note}</Text>
             </View>
           ))}
-        </SectionCard>
+        </AccordionSection>
 
-        <SectionCard title="14 天步骤 · 晨间">
+        {/* 4. 14天步骤 */}
+        <AccordionSection title="14天步骤">
+          <Text style={styles.subHead}>晨间</Text>
           {result.routine_paid.am.map((s) => (
             <View key={`am-${s.step}`} style={styles.step}>
               <Text style={styles.stepNum}>{s.step}</Text>
@@ -88,9 +92,7 @@ export function PaidReportScreen({ navigation }: Props) {
               </View>
             </View>
           ))}
-        </SectionCard>
-
-        <SectionCard title="14 天步骤 · 晚间">
+          <Text style={styles.subHead}>晚间</Text>
           {result.routine_paid.pm.map((s) => (
             <View key={`pm-${s.step}`} style={styles.step}>
               <Text style={styles.stepNum}>{s.step}</Text>
@@ -100,26 +102,20 @@ export function PaidReportScreen({ navigation }: Props) {
               </View>
             </View>
           ))}
-        </SectionCard>
+          {result.routine_paid.weekly.length > 0 ? (
+            <>
+              <Text style={styles.subHead}>每周</Text>
+              {result.routine_paid.weekly.map((w) => (
+                <Text key={w} style={styles.bullet}>
+                  · {w}
+                </Text>
+              ))}
+            </>
+          ) : null}
+        </AccordionSection>
 
-        {(result.routine_paid.weekly.length > 0 ||
-          result.routine_paid.avoid.length > 0) && (
-          <SectionCard title="每周 / 建议避开">
-            {result.routine_paid.weekly.map((w) => (
-              <Text key={w} style={styles.bullet}>
-                · {w}
-              </Text>
-            ))}
-            {result.routine_paid.avoid.map((a) => (
-              <Text key={a} style={styles.bulletMuted}>
-                · 避开：{a}
-              </Text>
-            ))}
-          </SectionCard>
-        )}
-
-        {/* Product cards: 品类 → 名称型号 → 对应关注点 → 理由 */}
-        <SectionCard title="产品参考">
+        {/* 5. 产品推荐 — keep 品类→名称型号→对应关注点→理由 */}
+        <AccordionSection title="产品推荐">
           <Text style={styles.noLinkNote}>
             仅展示品类、名称与型号及推荐理由，无购买链接、无广告按钮。
           </Text>
@@ -137,7 +133,24 @@ export function PaidReportScreen({ navigation }: Props) {
               <Text style={styles.productWhy}>{p.why}</Text>
             </View>
           ))}
-        </SectionCard>
+        </AccordionSection>
+
+        {/* 6. 注意事项 */}
+        <AccordionSection title="注意事项">
+          {result.routine_paid.avoid.map((a) => (
+            <Text key={a} style={styles.bulletMuted}>
+              · 避开：{a}
+            </Text>
+          ))}
+          {lifestyle.map((t) => (
+            <Text key={t} style={styles.bullet}>
+              · {t}
+            </Text>
+          ))}
+          {result.routine_paid.avoid.length === 0 && lifestyle.length === 0 ? (
+            <Text style={styles.bulletMuted}>暂无额外注意事项</Text>
+          ) : null}
+        </AccordionSection>
 
         <View style={styles.endBlock}>
           <Text style={styles.endNote}>
@@ -179,7 +192,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textMuted,
     letterSpacing: 1.5,
-    marginBottom: 10,
+    marginBottom: 14,
   },
   bigScore: {
     fontSize: 64,
@@ -192,7 +205,14 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 14,
     lineHeight: 22,
-    marginBottom: 22,
+    marginBottom: 16,
+  },
+  subHead: {
+    color: colors.text,
+    fontWeight: '700',
+    fontSize: 13,
+    marginTop: 10,
+    marginBottom: 10,
   },
   percBlock: { marginBottom: 12 },
   percObs: {
@@ -209,10 +229,20 @@ const styles = StyleSheet.create({
   },
   concern: { marginBottom: 12 },
   concernTitle: { color: colors.text, fontWeight: '700', fontSize: 15 },
-  concernNote: { color: colors.textSecondary, fontSize: 13, marginTop: 2, lineHeight: 19 },
+  concernNote: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    marginTop: 2,
+    lineHeight: 19,
+  },
   zone: { marginBottom: 10 },
   zoneTitle: { color: colors.primary, fontWeight: '700', fontSize: 13 },
-  zoneNote: { color: colors.textSecondary, fontSize: 13, marginTop: 2, lineHeight: 19 },
+  zoneNote: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    marginTop: 2,
+    lineHeight: 19,
+  },
   step: { flexDirection: 'row', marginBottom: 14, alignItems: 'flex-start' },
   stepNum: {
     width: 26,
@@ -263,7 +293,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
   },
-  productName: { color: colors.text, fontWeight: '700', fontSize: 15, marginBottom: 6 },
+  productName: {
+    color: colors.text,
+    fontWeight: '700',
+    fontSize: 15,
+    marginBottom: 6,
+  },
   productMapped: {
     color: colors.primary,
     fontSize: 12,

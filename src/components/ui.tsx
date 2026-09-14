@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -144,6 +144,37 @@ export function SectionCard({
   );
 }
 
+/** Collapsible section card for paid report accordion */
+export function AccordionSection({
+  title,
+  defaultExpanded = false,
+  children,
+}: {
+  title: string;
+  defaultExpanded?: boolean;
+  children: React.ReactNode;
+}) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+
+  return (
+    <View style={styles.sectionCard}>
+      <Pressable
+        onPress={() => setExpanded((v) => !v)}
+        style={({ pressed }) => [
+          styles.accordionHeader,
+          pressed && styles.btnPressed,
+        ]}
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+      >
+        <Text style={styles.sectionTitleCompact}>{title}</Text>
+        <Text style={styles.accordionChevron}>{expanded ? '▾' : '▸'}</Text>
+      </Pressable>
+      {expanded ? <View style={styles.accordionBody}>{children}</View> : null}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
@@ -248,5 +279,25 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 14,
     letterSpacing: 0.2,
+  },
+  accordionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  sectionTitleCompact: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.text,
+    letterSpacing: 0.2,
+    flex: 1,
+  },
+  accordionChevron: {
+    color: colors.textMuted,
+    fontSize: 16,
+    marginLeft: 12,
+  },
+  accordionBody: {
+    marginTop: 14,
   },
 });
