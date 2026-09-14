@@ -7,6 +7,8 @@ import { SecondaryButton, AccordionSection } from '../components/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, DISCLAIMER, tierFromScore } from '../theme/tiers';
 import {
+  DIMENSION_META,
+  EVIDENCE_MAP_TIP,
   PRODUCTS_LIST_GUIDE,
   REPORT_SECTION_LEADS,
   UNLOCK_COPY,
@@ -68,18 +70,36 @@ export function PaidReportScreen({ navigation }: Props) {
           title={leads.details.title}
           lead={leads.details.lead}
         >
-          {perception.map((p) => (
-            <View key={p.key} style={styles.percBlock}>
-              <ScoreBar label={p.label_zh} value={p.value} />
-              {p.status ? (
-                <Text style={styles.percStatus}>{p.status}</Text>
-              ) : null}
-              <Text style={styles.percObs}>{p.observation}</Text>
-              {p.detail ? (
-                <Text style={styles.percDetail}>{p.detail}</Text>
-              ) : null}
-            </View>
-          ))}
+          <Text style={styles.evidenceTip}>ⓘ {EVIDENCE_MAP_TIP}</Text>
+          {perception.map((p) => {
+            const meta = DIMENSION_META[p.key];
+            return (
+              <View key={p.key} style={styles.percBlock}>
+                <ScoreBar
+                  label={meta?.labelZh ?? p.label_zh}
+                  value={p.value}
+                />
+                {p.status ? (
+                  <Text style={styles.percStatus}>{p.status}</Text>
+                ) : null}
+                {meta ? (
+                  <View style={styles.percHelper}>
+                    <Text style={styles.percHelperLine}>
+                      测什么 · {meta.measuresWhat}
+                    </Text>
+                    <Text style={styles.percHelperLine}>
+                      常见影响因素 · {meta.commonFactors}
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={styles.percObs}>{p.observation}</Text>
+                )}
+                {p.detail ? (
+                  <Text style={styles.percDetail}>{p.detail}</Text>
+                ) : null}
+              </View>
+            );
+          })}
         </AccordionSection>
 
         {/* 3. 分区提示 */}
@@ -251,12 +271,28 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
+  evidenceTip: {
+    color: colors.textMuted,
+    fontSize: 11,
+    lineHeight: 16,
+    marginBottom: 12,
+  },
   percObs: {
     color: colors.textMuted,
     fontSize: 12,
     lineHeight: 17,
     marginTop: 4,
     marginBottom: 6,
+  },
+  percHelper: {
+    marginTop: 4,
+    marginBottom: 6,
+    gap: 2,
+  },
+  percHelperLine: {
+    color: colors.textMuted,
+    fontSize: 11,
+    lineHeight: 16,
   },
   percStatus: {
     color: colors.primary,
@@ -357,7 +393,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 4,
   },
-  barLabel: { width: 72, color: colors.textSecondary, fontSize: 12 },
+  barLabel: { width: 88, color: colors.textSecondary, fontSize: 12 },
   barTrack: {
     flex: 1,
     height: 8,

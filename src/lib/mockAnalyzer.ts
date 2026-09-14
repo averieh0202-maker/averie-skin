@@ -15,6 +15,8 @@ import {
 import { tierFromScore, DISCLAIMER } from '../theme/tiers';
 import {
   TendencyTag,
+  DIMENSION_META,
+  DIMENSION_ORDER,
   buildSkinTendency,
   dimTierFromScore,
   pickDimDetail,
@@ -40,26 +42,18 @@ function clampScore(n: number): number {
   return Math.max(0, Math.min(100, Math.round(n)));
 }
 
-/** Exact free-result display names — do not rename */
+/** Display names from dimensionMeta v2.2 */
 const FREE_DIM_LABELS: Record<PerceptionKey, string> = {
-  glow: '光泽',
-  oil: '出油',
-  pores: '毛孔',
-  texture: '纹理',
-  evenness: '色匀',
-  fine_lines: '细纹',
-  redness: '泛红',
+  radiance: DIMENSION_META.radiance.labelZh,
+  oiliness: DIMENSION_META.oiliness.labelZh,
+  pores: DIMENSION_META.pores.labelZh,
+  texture: DIMENSION_META.texture.labelZh,
+  tone_evenness: DIMENSION_META.tone_evenness.labelZh,
+  fine_lines: DIMENSION_META.fine_lines.labelZh,
+  redness: DIMENSION_META.redness.labelZh,
 };
 
-const FREE_DIM_ORDER: PerceptionKey[] = [
-  'glow',
-  'oil',
-  'pores',
-  'texture',
-  'evenness',
-  'fine_lines',
-  'redness',
-];
+const FREE_DIM_ORDER: PerceptionKey[] = DIMENSION_ORDER;
 
 const SKIN_TYPES: Array<{
   label: SkinTypeLabel;
@@ -228,13 +222,13 @@ const PRODUCT_CATALOG: CatalogEntry[] = [
     product_type: 'gentle_cleanser',
     name: '珂润',
     model: '润浸保湿洁颜泡沫 150ml',
-    fits: ['oil_prone', 'combination_prone', 'sensitivity_appearance', 'oiliness', 'oil'],
+    fits: ['oil_prone', 'combination_prone', 'sensitivity_appearance', 'oiliness'],
     mappedConcern: (ctx) => {
-      const oil = dim(ctx.perception, 'oil');
+      const oil = dim(ctx.perception, 'oiliness');
       const red = dim(ctx.perception, 'redness');
-      if (oil < 55) return '出油';
-      if (red < 55) return '泛红';
-      return ctx.concerns[0]?.label_zh ?? '出油';
+      if (oil < 55) return DIMENSION_META.oiliness.labelZh;
+      if (red < 55) return DIMENSION_META.redness.labelZh;
+      return ctx.concerns[0]?.label_zh ?? DIMENSION_META.oiliness.labelZh;
     },
     whyTemplate: () =>
       '质地：细密泡沫，洗感不紧绷。成分角色：氨基酸体系温和带走表面油脂与污垢，不承担缩小毛孔承诺。用法：晨间一次即可，避免反复搓洗。边界：不替代卸妆，亦不做深层去角质；泛红明显时改选更温和洁面。',
@@ -245,12 +239,12 @@ const PRODUCT_CATALOG: CatalogEntry[] = [
     product_type: 'niacinamide_serum',
     name: 'The Ordinary',
     model: 'Niacinamide 10% + Zinc 1% 30ml',
-    fits: ['oiliness', 'pores', 'acne', 'oil_prone', 'combination_prone', 'oil', 'pores'],
+    fits: ['oiliness', 'pores', 'acne', 'oil_prone', 'combination_prone'],
     mappedConcern: (ctx) => {
       const pores = dim(ctx.perception, 'pores');
-      const oil = dim(ctx.perception, 'oil');
-      if (pores <= oil) return '毛孔';
-      return '出油';
+      const oil = dim(ctx.perception, 'oiliness');
+      if (pores <= oil) return DIMENSION_META.pores.labelZh;
+      return DIMENSION_META.oiliness.labelZh;
     },
     whyTemplate: () =>
       '质地：清薄水感，好推开。成分角色：烟酰胺与锌盐对应出油与毛孔观感的日常护理，而非泛泛提亮。用法：洁面后薄涂一层，再接保湿与防晒。边界：可隔日起步；可见泛红明显时暂缓叠加其他刺激性成分。',
@@ -265,9 +259,9 @@ const PRODUCT_CATALOG: CatalogEntry[] = [
     mappedConcern: (ctx) => {
       const red = dim(ctx.perception, 'redness');
       const tex = dim(ctx.perception, 'texture');
-      if (red < 60) return '泛红';
-      if (tex < 60) return '纹理';
-      return '泛红';
+      if (red < 60) return DIMENSION_META.redness.labelZh;
+      if (tex < 60) return DIMENSION_META.texture.labelZh;
+      return DIMENSION_META.redness.labelZh;
     },
     whyTemplate: () =>
       '质地：偏轻乳霜，不闷厚。成分角色：以舒缓、稳住泛红外观为主，兼顾日间屏障层。用法：防晒前涂于两颊与口周，T区可更薄。边界：不宣称消退发红；屏障不稳定时步骤做少更合适。',
@@ -278,12 +272,12 @@ const PRODUCT_CATALOG: CatalogEntry[] = [
     product_type: 'sunscreen',
     name: '安热沙',
     model: '金灿倍护防晒乳 SPF50+ 60ml',
-    fits: ['pigmentation', 'evenness', 'glow', 'dullness', 'fine_lines'],
+    fits: ['pigmentation', 'tone_evenness', 'radiance', 'dullness', 'fine_lines'],
     mappedConcern: (ctx) => {
-      const even = dim(ctx.perception, 'evenness');
-      const glow = dim(ctx.perception, 'glow');
-      if (even <= glow) return '色匀';
-      return '光泽';
+      const even = dim(ctx.perception, 'tone_evenness');
+      const glow = dim(ctx.perception, 'radiance');
+      if (even <= glow) return DIMENSION_META.tone_evenness.labelZh;
+      return DIMENSION_META.radiance.labelZh;
     },
     whyTemplate: () =>
       '质地：成膜后偏干爽，适合愿天天涂的节奏。成分角色：日间防护，降低光带来的加深与不均风险，非美白疗程。用法：保湿后足量涂抹，出汗后自行决定补涂。边界：不承诺变白或淡斑；敏感期先做肤感测试。',
@@ -297,8 +291,8 @@ const PRODUCT_CATALOG: CatalogEntry[] = [
     fits: ['sensitivity_appearance', 'redness', 'dry_prone', 'barrier', 'redness'],
     mappedConcern: (ctx) => {
       const red = dim(ctx.perception, 'redness');
-      if (red < 58) return '泛红';
-      return ctx.concerns.find((c) => c.id === 'sensitivity_appearance')?.label_zh ?? '纹理';
+      if (red < 58) return DIMENSION_META.redness.labelZh;
+      return ctx.concerns.find((c) => c.id === 'sensitivity_appearance')?.label_zh ?? DIMENSION_META.texture.labelZh;
     },
     whyTemplate: () =>
       '质地：霜状洁面，洗完不发紧。成分角色：氨基酸体系卸除防晒与日间残留，减少两颊被洗紧的风险。用法：晚间第一步，温水洗净即可。边界：不与强清洁同晚叠加；红感高时只留温和洁面。',
@@ -309,12 +303,12 @@ const PRODUCT_CATALOG: CatalogEntry[] = [
     product_type: 'soothing_serum',
     name: '修丽可',
     model: '色修精华（Phyto+）30ml',
-    fits: ['redness', 'pigmentation', 'evenness', 'sensitivity_appearance'],
+    fits: ['redness', 'pigmentation', 'tone_evenness', 'sensitivity_appearance'],
     mappedConcern: (ctx) => {
       const red = dim(ctx.perception, 'redness');
-      const even = dim(ctx.perception, 'evenness');
+      const even = dim(ctx.perception, 'tone_evenness');
       if (red <= even) return '泛红';
-      return '色匀';
+      return DIMENSION_META.tone_evenness.labelZh;
     },
     whyTemplate: () =>
       '质地：轻薄易推开。成分角色：植物舒缓对应泛红与色匀观感，不宣称医疗级消退。用法：洁面后、保湿前，晚间为宜。边界：不替代防晒；若不适或红感加重，停用并咨询专业人士。',
@@ -329,9 +323,9 @@ const PRODUCT_CATALOG: CatalogEntry[] = [
     mappedConcern: (ctx) => {
       const red = dim(ctx.perception, 'redness');
       const tex = dim(ctx.perception, 'texture');
-      if (red < 55) return '泛红';
-      if (tex < 55) return '纹理';
-      return '细纹';
+      if (red < 55) return DIMENSION_META.redness.labelZh;
+      if (tex < 55) return DIMENSION_META.texture.labelZh;
+      return DIMENSION_META.fine_lines.labelZh;
     },
     whyTemplate: () =>
       '质地：偏润但不厚重，少香精感更佳。成分角色：舒缓保湿、减少外界摩擦感，不宣称治疗。用法：精简步骤的最后一步；刺激期可只留洁面+它，T区减量。边界：对应「看起来偏敏感、易干红」信号；持续加重请咨询专业人士。',
@@ -342,14 +336,14 @@ const PRODUCT_CATALOG: CatalogEntry[] = [
     product_type: 'night_moisturizer',
     name: '雅诗兰黛',
     model: '特润修护肌透精华霜 50ml',
-    fits: ['dry_prone', 'texture', 'dullness', 'barrier', 'glow', 'fine_lines'],
+    fits: ['dry_prone', 'texture', 'dullness', 'barrier', 'radiance', 'fine_lines'],
     mappedConcern: (ctx) => {
       const tex = dim(ctx.perception, 'texture');
       const lines = dim(ctx.perception, 'fine_lines');
-      const glow = dim(ctx.perception, 'glow');
-      if (tex <= lines && tex <= glow) return '纹理';
-      if (lines <= glow) return '细纹';
-      return '光泽';
+      const glow = dim(ctx.perception, 'radiance');
+      if (tex <= lines && tex <= glow) return DIMENSION_META.texture.labelZh;
+      if (lines <= glow) return DIMENSION_META.fine_lines.labelZh;
+      return DIMENSION_META.radiance.labelZh;
     },
     whyTemplate: () =>
       '质地：滋润乳霜，好推开。成分角色：夜间把水分留在表层，让光泽与纹路观感更舒服。用法：精华后使用，主要落在两颊，可薄层叠涂。边界：偏油或混油倾向避开T区厚涂；它不替代防晒与休息。',
@@ -407,7 +401,7 @@ function buildPerception(
 ): PerceptionDimension[] {
   const has = (id: ConcernId) => concerns.some((c) => c.id === id);
 
-  const glow = clampScore(
+  const radiance = clampScore(
     score +
       Math.floor((seeded(seed, 20) - 0.5) * 14) +
       (has('dullness') ? -10 : 4),
@@ -418,7 +412,7 @@ function buildPerception(
       : skinLabel === 'dry_prone'
         ? 8
         : 0;
-  const oil = clampScore(
+  const oiliness = clampScore(
     score +
       oilBias +
       Math.floor((seeded(seed, 21) - 0.5) * 20) +
@@ -435,7 +429,7 @@ function buildPerception(
       Math.floor((seeded(seed, 23) - 0.5) * 16) +
       (has('texture') || has('dryness_flakes') ? -10 : 5),
   );
-  const evenness = clampScore(
+  const tone_evenness = clampScore(
     score +
       Math.floor((seeded(seed, 24) - 0.5) * 14) +
       (has('pigmentation') || has('dullness') ? -10 : 5),
@@ -454,11 +448,11 @@ function buildPerception(
   );
 
   const values: Record<PerceptionKey, number> = {
-    glow,
-    oil,
+    radiance,
+    oiliness,
     pores,
     texture,
-    evenness,
+    tone_evenness,
     fine_lines,
     redness,
   };
@@ -485,8 +479,8 @@ function buildHeadline(
 ): string {
   const high = highestDims(perception, 1)[0];
   const low = lowestDims(perception, 1)[0];
-  const strength = high?.label_zh ?? '光泽';
-  const focus = low?.label_zh ?? '出油';
+  const strength = high?.label_zh ?? DIMENSION_META.radiance.labelZh;
+  const focus = low?.label_zh ?? DIMENSION_META.oiliness.labelZh;
   const useAlt = seeded(seed, 60) > 0.5;
 
   if (useAlt) {
@@ -650,7 +644,7 @@ export function analyzeSkin(input: AnalysisInput): AnalysisResult {
     unclear: ['当前光线下暂难判断，先给保守读法'],
   };
 
-  const oil = dim(perception, 'oil');
+  const oil = dim(perception, 'oiliness');
   const red = dim(perception, 'redness');
   const pores = dim(perception, 'pores');
 
@@ -717,7 +711,7 @@ export function analyzeSkin(input: AnalysisInput): AnalysisResult {
   const lowLabels = lowestDims(perception, 2)
     .map((d) => d.label_zh)
     .join('、');
-  const highLabel = highestDims(perception, 1)[0]?.label_zh ?? '光泽';
+  const highLabel = highestDims(perception, 1)[0]?.label_zh ?? DIMENSION_META.radiance.labelZh;
 
   return {
     schema_version: '1.4',

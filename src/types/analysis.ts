@@ -1,8 +1,8 @@
 /** Averie Skin Analysis schema v1.4 (MVP subset)
- * Free 7 dims (exact display names): 光泽、出油、毛孔、纹理、色匀、细纹、泛红
+ * Free 7 dims (v2.2): 光泽表现、油光表现、毛孔可见度、表面纹理、肤色均匀度、细纹可见度、泛红表现
  * Product card order: 品类 → 名称型号 → 对应关注点 → 理由
  * Routine order: 清洁 → (精华 optional) → 保湿 → 防晒
- * Copy pack keys: skin_tendency / dim_* / report_*
+ * Copy pack keys: skin_tendency / dim_* / report_* / dimensionMeta
  */
 
 export type Gender = 'female' | 'male' | 'unspecified';
@@ -51,11 +51,11 @@ export type ProductCategory =
 export type DimStatus = '好' | '中' | '差';
 
 export type PerceptionKey =
-  | 'glow'
-  | 'oil'
+  | 'radiance'
+  | 'oiliness'
   | 'pores'
   | 'texture'
-  | 'evenness'
+  | 'tone_evenness'
   | 'fine_lines'
   | 'redness';
 
@@ -96,8 +96,9 @@ export interface ScoreBreakdown {
 
 /**
  * Free-layer perception dimensions — shown on FreeResult.
- * Display names must be exactly: 光泽、出油、毛孔、纹理、色匀、细纹、泛红
- * Prefer conceptual keys: dim_glow|oil|pore|texture|evenness|wrinkle|redness
+ * Display names from dimensionMeta v2.2 (fixed helper lines do not vary by score).
+ * Keys: radiance|oiliness|pores|texture|tone_evenness|fine_lines|redness
+ * Legacy aliases: glow→radiance, oil→oiliness, evenness→tone_evenness
  */
 export interface PerceptionDimension {
   key: PerceptionKey;

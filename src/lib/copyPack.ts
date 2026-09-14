@@ -1,6 +1,6 @@
 /**
- * 文案大师 Averie Skin copy pack v1 — embeddable constants & helpers.
- * Keys: skin_tendency / dim_* / report_*
+ * 文案大师 Averie Skin copy pack — embeddable constants & helpers.
+ * Keys: skin_tendency / dim_* / report_* / dimensionMeta (helper v2.2)
  */
 
 import { PerceptionKey } from '../types/analysis';
@@ -54,6 +54,77 @@ export const UNLOCK_COPY =
 export const DISCLAIMER_COPY =
   'Averie Skin基于自拍图像给出护肤向观察与护理方向参考，不构成医疗诊断或治疗效果承诺。';
 
+
+/** Seven-dimension helper copy v2.2 — fixed lines; do NOT vary by score */
+export interface DimensionMeta {
+  key: PerceptionKey;
+  /** UI dimension title */
+  labelZh: string;
+  /** 测什么 */
+  measuresWhat: string;
+  /** 常见影响因素（educational; not photo proof） */
+  commonFactors: string;
+}
+
+export const DIMENSION_META: Record<PerceptionKey, DimensionMeta> = {
+  radiance: {
+    key: 'radiance',
+    labelZh: '光泽表现',
+    measuresWhat: '柔和光泽',
+    commonFactors: '睡眠不足、清洁过度、保湿不够、干燥环境',
+  },
+  oiliness: {
+    key: 'oiliness',
+    labelZh: '油光表现',
+    measuresWhat: '油脂光泽密度',
+    commonFactors: '湿热气候、饮食偏油腻、过度控油、护肤叠太厚',
+  },
+  pores: {
+    key: 'pores',
+    labelZh: '毛孔可见度',
+    measuresWhat: '毛孔清晰度',
+    commonFactors: '长期出油、清洁习惯、反复挤压、年龄增长',
+  },
+  texture: {
+    key: 'texture',
+    labelZh: '表面纹理',
+    measuresWhat: '表面粗糙与起伏',
+    commonFactors: '干燥缺水、频繁去角质、环境干燥、护肤不规律',
+  },
+  tone_evenness: {
+    key: 'tone_evenness',
+    labelZh: '肤色均匀度',
+    measuresWhat: '肤色是否均匀',
+    commonFactors: '长期紫外线、防晒不足、色沉反复、卸妆不彻底',
+  },
+  fine_lines: {
+    key: 'fine_lines',
+    labelZh: '细纹可见度',
+    measuresWhat: '细纹清晰度',
+    commonFactors: '表情习惯、干燥缺水、睡眠不足、长期日晒',
+  },
+  redness: {
+    key: 'redness',
+    labelZh: '泛红表现',
+    measuresWhat: '泛红程度',
+    commonFactors: '温差刺激、护肤刺激、辛辣酒精、屏障不稳定',
+  },
+};
+
+export const DIMENSION_ORDER: PerceptionKey[] = [
+  'radiance',
+  'oiliness',
+  'pores',
+  'texture',
+  'tone_evenness',
+  'fine_lines',
+  'redness',
+];
+
+/** Optional ⓘ 对照 tip — show once near dimensions */
+export const EVIDENCE_MAP_TIP =
+  '线→细纹；小点轮廓→毛孔；片状粗糙/起皮/起伏→表面纹理。同一证据只归一维。';
+
 export const PRODUCTS_LIST_GUIDE =
   '按你的关注点匹配到品类与型号占位，方便对照柜上实物；是否适合请自行判断。';
 
@@ -69,12 +140,12 @@ export const DIM_SIDE_NOTES: Record<
   PerceptionKey,
   Record<DimTier, string[]>
 > = {
-  glow: {
+  radiance: {
     好: ['光是匀的，像刚喝过水的感觉', '高光自然落在脸上，不油不哑'],
     中: ['有光，但有点「散」，可以再润一点', '亮得不够透，更像表层还渴着'],
     差: ['今天偏哑，光不太愿意停在脸上', '看起来倦一点，优先补水再谈光泽'],
   },
-  oil: {
+  oiliness: {
     好: ['出油很克制，T区还算听话', '油水平衡还在线，今天不用慌'],
     中: ['局部开始亮了，尤其是中午前后', '出油有信号，但还没整张脸开趴'],
     差: ['油感比较活跃，清洁别过度', '今天油意明显，控油要温和、别拔干'],
@@ -89,7 +160,7 @@ export const DIM_SIDE_NOTES: Record<
     中: ['有一点细纹路，近看才发现', '不够「镜面」，但日常完全能接受'],
     差: ['纹理更明显，像皮肤有点脱水起皱', '平整度一般，保湿和轻薄护理更友好'],
   },
-  evenness: {
+  tone_evenness: {
     好: ['肤色铺得很匀，像一张干净的底', '深浅差不大，整体看起来很顺眼'],
     中: ['局部有一点深浅差，不刺眼', '脸颊/嘴周可能略不均，很常见'],
     差: ['色差更明显，防晒和温和护理更值得坚持', '均匀度一般，别急着叠很多美白概念'],
@@ -108,18 +179,18 @@ export const DIM_SIDE_NOTES: Record<
 
 /**
  * Paid 分项详解 bodies — 所见→可能相关→护理方向，约 60–120 字
- * Prefer keys conceptually: dim_glow|oil|pore|texture|evenness|wrinkle|redness
+ * Prefer keys: radiance|oiliness|pores|texture|tone_evenness|fine_lines|redness
  */
 export const DIM_DETAIL_BODIES: Record<
   PerceptionKey,
   Record<DimTier, string>
 > = {
-  glow: {
+  radiance: {
     好: '【所见】今天光泽铺得匀，亮感自然停在脸上，不油不哑。【可能相关】日常保湿节奏、睡眠和清洁力度比较合拍。【护理方向】维持薄层保湿与日间防晒即可；若偶尔偏哑，先补水再谈提亮。',
     中: '【所见】今天光泽偏「散」，亮一点却不够透，更像表层还渴着。【可能相关】清洁过猛、保湿停在表面、睡眠或空调干燥。【护理方向】先把保湿做成薄层叠润，再考虑提亮；刺痛或紧绷时把步骤做简。',
     差: '【所见】今天偏哑，光不太愿意停在脸上，观感略倦。【可能相关】缺水、熬夜、防晒与保湿断档较常见。【护理方向】优先把水润做满、做薄；刺激性叠加先让位，等光泽回稳再加细节。',
   },
-  oil: {
+  oiliness: {
     好: '【所见】出油很克制，T区还算听话，油水平衡在线。【可能相关】气候、清洁力度与保湿质地比较匹配。【护理方向】维持温和清洁与清爽保湿即可；别因「怕油」过度洗到发紧。',
     中: '【所见】局部开始亮了，尤其中午前后，还没到整张脸开趴。【可能相关】湿热、妆前闷感、控油与保湿失衡。【护理方向】清洁见底即可，控油选清爽不拔干；泛红时先减刺激成分。',
     差: '【所见】T区油意比较活跃，光线下一层细膜很明显，毛孔也会被一起叫醒。【可能相关】季节湿热、过度控油反弹、妆前闷。【护理方向】清洁温和见底，控油清爽不拔干；发红发痒时先停刺激性成分。',
@@ -134,7 +205,7 @@ export const DIM_DETAIL_BODIES: Record<
     中: '【所见】有一点细纹路，近看才发现，日常完全能接受。【可能相关】轻度缺水、干燥环境、表情习惯。【护理方向】把水润做稳，质地选好推开的；酸类与摩擦先让位给舒服。',
     差: '【所见】表面平整度一般，细看有点像脱水后的细皱褶。【可能相关】缺水、干燥环境、防晒和保湿断档。【护理方向】先把水润做满、做薄；酸类与摩擦先让位给屏障舒服。',
   },
-  evenness: {
+  tone_evenness: {
     好: '【所见】肤色铺得很匀，像一张干净的底，深浅差不大。【可能相关】防晒习惯与温和护理比较持续。【护理方向】继续日间防护与基础保湿；美白概念产品不必急着叠很多。',
     中: '【所见】局部有浅浅的深浅差，多半在脸颊或嘴周，整体还不刺眼。【可能相关】紫外线、旧印观感、卸妆是否干净。【护理方向】防晒是底盘，美白概念慢慢加；敏感时只做舒缓。',
     差: '【所见】色差更明显一些，均匀度一般。【可能相关】光暴露、护理断档、局部刺激后的痕迹观感。【护理方向】防晒和温和护理更值得坚持；别急着叠很多美白概念，不适就做减法。',

@@ -14,7 +14,11 @@ import { PrimaryButton, SecondaryButton } from '../components/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, DISCLAIMER, tierFromScore } from '../theme/tiers';
 import { PerceptionDimension } from '../types/analysis';
-import { CTA_COPY } from '../lib/copyPack';
+import {
+  CTA_COPY,
+  DIMENSION_META,
+  EVIDENCE_MAP_TIP,
+} from '../lib/copyPack';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'FreeResult'>;
 
@@ -109,7 +113,7 @@ export function FreeResultScreen({ navigation }: Props) {
           <Text style={styles.headline}>{result.summary_free.headline}</Text>
         </View>
 
-        {/* 7 perception dimensions — exact names */}
+        {/* 7 perception dimensions — fixed helper lines v2.2 */}
         <View
           style={[
             styles.dimsCard,
@@ -118,6 +122,7 @@ export function FreeResultScreen({ navigation }: Props) {
         >
           <Text style={styles.dimsTitle}>分项观感</Text>
           <Text style={styles.dimsHint}>外观感知 · 基于当前影像</Text>
+          <Text style={styles.evidenceTip}>ⓘ {EVIDENCE_MAP_TIP}</Text>
           {dimensions.map((d) => (
             <DimensionRow key={d.key} dim={d} accent={tier.accent} />
           ))}
@@ -144,11 +149,12 @@ function DimensionRow({
   dim: PerceptionDimension;
   accent: string;
 }) {
+  const meta = DIMENSION_META[dim.key];
   return (
     <View style={styles.dimRow}>
       <View style={styles.dimHeader}>
         <View style={styles.dimLabelWrap}>
-          <Text style={styles.dimLabel}>{dim.label_zh}</Text>
+          <Text style={styles.dimLabel}>{meta?.labelZh ?? dim.label_zh}</Text>
           {dim.status ? (
             <Text style={styles.dimStatus}>{dim.status}</Text>
           ) : null}
@@ -166,7 +172,18 @@ function DimensionRow({
           ]}
         />
       </View>
-      <Text style={styles.dimObs}>{dim.observation}</Text>
+      {meta ? (
+        <View style={styles.dimHelper}>
+          <Text style={styles.dimHelperLine}>
+            测什么 · {meta.measuresWhat}
+          </Text>
+          <Text style={styles.dimHelperLine}>
+            常见影响因素 · {meta.commonFactors}
+          </Text>
+        </View>
+      ) : (
+        <Text style={styles.dimObs}>{dim.observation}</Text>
+      )}
     </View>
   );
 }
@@ -316,6 +333,12 @@ const styles = StyleSheet.create({
   dimsHint: {
     fontSize: 11,
     color: 'rgba(255,255,255,0.42)',
+    marginBottom: 8,
+  },
+  evidenceTip: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.48)',
+    lineHeight: 16,
     marginBottom: 16,
   },
   dimRow: { marginBottom: 16 },
@@ -361,6 +384,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(255,255,255,0.55)',
     lineHeight: 17,
+  },
+  dimHelper: {
+    marginTop: 6,
+    gap: 2,
+  },
+  dimHelperLine: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.52)',
+    lineHeight: 16,
   },
   ctaBlock: { width: '100%', marginBottom: 20 },
   ctaHint: {
