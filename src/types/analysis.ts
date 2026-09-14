@@ -2,6 +2,7 @@
  * Free 7 dims (exact display names): 光泽、出油、毛孔、纹理、色匀、细纹、泛红
  * Product card order: 品类 → 名称型号 → 对应关注点 → 理由
  * Routine order: 清洁 → (精华 optional) → 保湿 → 防晒
+ * Copy pack keys: skin_tendency / dim_* / report_*
  */
 
 export type Gender = 'female' | 'male' | 'unspecified';
@@ -46,8 +47,8 @@ export type ProductCategory =
   | 'treatment'
   | 'other';
 
-/** Optional four-level status words for free dimensions */
-export type DimStatus = '稳定' | '尚可' | '可观察' | '需留意';
+/** 好/中/差 — advisor side-note tier (copy pack v1) */
+export type DimStatus = '好' | '中' | '差';
 
 export type PerceptionKey =
   | 'glow'
@@ -73,6 +74,7 @@ export interface SkinScore {
 
 export interface SkinType {
   label: SkinTypeLabel;
+  /** Main tendency tag only, e.g. 混油倾向 */
   label_zh: string;
   evidence: string[];
 }
@@ -95,16 +97,19 @@ export interface ScoreBreakdown {
 /**
  * Free-layer perception dimensions — shown on FreeResult.
  * Display names must be exactly: 光泽、出油、毛孔、纹理、色匀、细纹、泛红
+ * Prefer conceptual keys: dim_glow|oil|pore|texture|evenness|wrinkle|redness
  */
 export interface PerceptionDimension {
   key: PerceptionKey;
   /** Exact UI label — one of the seven fixed names */
   label_zh: string;
   value: number;
-  /** One observation line, e.g. 「本次影像可见…」 */
+  /** Side note 12–28 chars, advisor tone (好/中/差 cycle) */
   observation: string;
-  /** Optional four-level status word */
+  /** 好 / 中 / 差 mapped from mock score */
   status?: DimStatus;
+  /** Paid 分项详解 60–120 chars: 所见→可能相关→护理方向 */
+  detail?: string;
 }
 
 export interface ZoneNote {
@@ -154,12 +159,17 @@ export interface AnalysisResult {
   };
   skin_score: SkinScore;
   skin_type: SkinType;
+  /**
+   * Free tendency display: 「主标签 · 画面句」
+   * Prefer key: skin_tendency
+   */
+  skin_tendency: string;
   concerns: Concern[];
   /** Free result 7 dimension scores (perception, not severity) */
   perception_scores: PerceptionDimension[];
   score_breakdown_paid: ScoreBreakdown;
   summary_free: {
-    /** One sentence: 优势 + 1–2 个关注点；neutral, no confidence numbers */
+    /** 页头 ≤60字：优势 + 关注点 */
     headline: string;
   };
   report_paid: {

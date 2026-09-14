@@ -11,9 +11,15 @@ import {
   ProductCategory,
   ProductItem,
   SkinTypeLabel,
-  TierId,
 } from '../types/analysis';
 import { tierFromScore, DISCLAIMER } from '../theme/tiers';
+import {
+  TendencyTag,
+  buildSkinTendency,
+  dimTierFromScore,
+  pickDimDetail,
+  pickDimSideNote,
+} from './copyPack';
 
 /** Simple deterministic hash from string → 0..1 */
 function hashSeed(s: string): number {
@@ -55,18 +61,14 @@ const FREE_DIM_ORDER: PerceptionKey[] = [
   'redness',
 ];
 
-function statusFromScore(value: number): DimStatus {
-  if (value >= 78) return '稳定';
-  if (value >= 62) return '尚可';
-  if (value >= 45) return '可观察';
-  return '需留意';
-}
-
-const SKIN_TYPES: Array<{ label: SkinTypeLabel; label_zh: string }> = [
-  { label: 'oil_prone', label_zh: '偏油' },
-  { label: 'dry_prone', label_zh: '偏干' },
-  { label: 'combination_prone', label_zh: '混合倾向' },
-  { label: 'balanced_prone', label_zh: '相对平衡' },
+const SKIN_TYPES: Array<{
+  label: SkinTypeLabel;
+  label_zh: TendencyTag;
+}> = [
+  { label: 'oil_prone', label_zh: '油皮活跃感' },
+  { label: 'dry_prone', label_zh: '干皮缺水感' },
+  { label: 'combination_prone', label_zh: '混油倾向' },
+  { label: 'balanced_prone', label_zh: '中性偏稳' },
 ];
 
 const CONCERN_POOL: Array<{
@@ -79,61 +81,88 @@ const CONCERN_POOL: Array<{
     id: 'pores',
     label_zh: '毛孔',
     regions: ['t_zone', 'nose'],
-    notes: ['本次影像可见 T 区毛孔在光线下更清晰', '本次影像可见鼻翼两侧细小毛孔纹理'],
+    notes: [
+      'T区与鼻翼毛孔在光线里更有存在感，和出油、光影常一起出现。',
+      '鼻翼两侧细小毛孔纹理更清楚一点，仍属常见观感。',
+    ],
   },
   {
     id: 'dullness',
     label_zh: '暗沉',
     regions: ['cheeks', 'full_face'],
-    notes: ['本次影像可见面中光泽偏弱', '本次影像可见整体反光略显疲惫'],
+    notes: [
+      '面中光泽偏弱，亮感有点散，更像表层还渴着。',
+      '整体反光略显疲惫，优先把水润做稳再谈光泽。',
+    ],
   },
   {
     id: 'oiliness',
     label_zh: '出油',
     regions: ['t_zone', 'forehead'],
-    notes: ['本次影像可见前额与鼻梁有轻微油光', '本次影像可见 T 区反光略多于两颊'],
+    notes: [
+      '前额与鼻梁有轻微油光，中午前后更容易亮。',
+      'T区反光略多于两颊，清洁温和见底即可。',
+    ],
   },
   {
     id: 'dryness_flakes',
     label_zh: '干燥起皮',
     regions: ['cheeks', 'chin'],
-    notes: ['本次影像可见两颊纹理偏干', '本次影像可见下巴附近细微干纹'],
+    notes: [
+      '两颊纹理偏干，笑的时候更像轻轻折过的纸。',
+      '下巴附近有细微干纹感，保湿宜薄层叠润。',
+    ],
   },
   {
     id: 'pigmentation',
     label_zh: '色沉',
     regions: ['cheeks', 'perioral'],
-    notes: ['本次影像可见面颊局部色调不均', '本次影像可见口周附近轻微色差'],
+    notes: [
+      '面颊局部有一点深浅差，不刺眼，防晒更值得坚持。',
+      '口周附近轻微色差，美白概念不必急着叠很多。',
+    ],
   },
   {
     id: 'texture',
     label_zh: '粗糙纹理',
     regions: ['cheeks', 'forehead'],
-    notes: ['本次影像可见面颊细纹纹理略粗', '本次影像可见前额肤感不够细腻'],
+    notes: [
+      '面颊细纹路略粗，近看才发现，常和缺水有关。',
+      '前额肤感不够细腻，轻薄保湿往往更友好。',
+    ],
   },
   {
     id: 'redness',
     label_zh: '泛红',
     regions: ['cheeks', 'nose'],
-    notes: ['本次影像可见两颊轻微泛红', '本次影像可见鼻翼周围色调偏红'],
+    notes: [
+      '两颊有一点薄红，像刚吹过风或运动后。',
+      '鼻翼周围色调偏红，步骤做少、做温和更合适。',
+    ],
   },
   {
     id: 'acne',
     label_zh: '痘点外观',
     regions: ['chin', 'forehead'],
-    notes: ['本次影像可见下巴附近零星凸起', '本次影像可见前额局部小范围凸起'],
+    notes: [
+      '下巴附近有零星凸起观感，清洁与保湿别过度。',
+      '前额局部小范围凸起，刺激性叠加先让位。',
+    ],
   },
   {
     id: 'sensitivity_appearance',
     label_zh: '敏感外观',
     regions: ['cheeks', 'full_face'],
-    notes: ['本次影像可见面颊偏敏感的外观', '本次影像可见整体屏障观感偏脆弱'],
+    notes: [
+      '面颊偏敏感的外观，今天更适合少步骤、慢一点。',
+      '整体屏障观感偏脆，经不起太热闹的护理。',
+    ],
   },
 ];
 
 const ZONE_ZH: Record<FaceRegion, string> = {
   forehead: '前额',
-  t_zone: 'T 区',
+  t_zone: 'T区',
   cheeks: '两颊',
   chin: '下巴',
   nose: '鼻部',
@@ -207,11 +236,8 @@ const PRODUCT_CATALOG: CatalogEntry[] = [
       if (red < 55) return '泛红';
       return ctx.concerns[0]?.label_zh ?? '出油';
     },
-    whyTemplate: (ctx) => {
-      const oil = dim(ctx.perception, 'oil');
-      const red = dim(ctx.perception, 'redness');
-      return `质地为细密泡沫，清洁力适中。氨基酸体系扮演温和去脂角色，对应本次出油观感（约 ${oil}）与可能并存的泛红（约 ${red}）。晨间使用一次即可，避免反复搓洗。边界：不替代卸妆，亦不做深层去角质。`;
-    },
+    whyTemplate: () =>
+      '质地：细密泡沫，洗感不紧绷。成分角色：氨基酸体系温和带走表面油脂与污垢，不承担缩小毛孔承诺。用法：晨间一次即可，避免反复搓洗。边界：不替代卸妆，亦不做深层去角质；泛红明显时改选更温和洁面。',
   },
   {
     slot: 'am_serum',
@@ -226,11 +252,8 @@ const PRODUCT_CATALOG: CatalogEntry[] = [
       if (pores <= oil) return '毛孔';
       return '出油';
     },
-    whyTemplate: (ctx) => {
-      const pores = dim(ctx.perception, 'pores');
-      const oil = dim(ctx.perception, 'oil');
-      return `质地清薄水感。烟酰胺与锌盐对应本次毛孔（约 ${pores}）与出油（约 ${oil}）观感，而非泛泛提亮。洁面后薄涂一层，再接保湿与防晒。边界：浓度偏高者可隔日起步；可见泛红明显时暂缓叠加其他刺激性成分。`;
-    },
+    whyTemplate: () =>
+      '质地：清薄水感，好推开。成分角色：烟酰胺与锌盐对应出油与毛孔观感的日常护理，而非泛泛提亮。用法：洁面后薄涂一层，再接保湿与防晒。边界：可隔日起步；可见泛红明显时暂缓叠加其他刺激性成分。',
   },
   {
     slot: 'am_moisturizer',
@@ -246,11 +269,8 @@ const PRODUCT_CATALOG: CatalogEntry[] = [
       if (tex < 60) return '纹理';
       return '泛红';
     },
-    whyTemplate: (ctx) => {
-      const red = dim(ctx.perception, 'redness');
-      const oil = dim(ctx.perception, 'oil');
-      return `质地偏轻乳霜。舒缓修护角色用于稳住本次泛红外观（约 ${red}），同时兼顾出油观感（约 ${oil}）下的日间屏障层。防晒前涂于两颊与口周。边界：不承诺消退发红；T 区可更薄。`;
-    },
+    whyTemplate: () =>
+      '质地：偏轻乳霜，不闷厚。成分角色：以舒缓、稳住泛红外观为主，兼顾日间屏障层。用法：防晒前涂于两颊与口周，T区可更薄。边界：不宣称消退发红；屏障不稳定时步骤做少更合适。',
   },
   {
     slot: 'am_sunscreen',
@@ -265,11 +285,8 @@ const PRODUCT_CATALOG: CatalogEntry[] = [
       if (even <= glow) return '色匀';
       return '光泽';
     },
-    whyTemplate: (ctx) => {
-      const even = dim(ctx.perception, 'evenness');
-      const glow = dim(ctx.perception, 'glow');
-      return `质地成膜后偏干爽。防晒角色是保住本次色匀（约 ${even}）与光泽（约 ${glow}）观感，降低紫外线进一步拉开分区色差的风险。保湿后足量涂抹，户外需补涂。边界：不承诺美白或淡斑；仅作日间防护步骤。`;
-    },
+    whyTemplate: () =>
+      '质地：成膜后偏干爽，适合愿天天涂的节奏。成分角色：日间防护，降低光带来的加深与不均风险，非美白疗程。用法：保湿后足量涂抹，出汗后自行决定补涂。边界：不承诺变白或淡斑；敏感期先做肤感测试。',
   },
   {
     slot: 'pm_cleanser',
@@ -283,11 +300,8 @@ const PRODUCT_CATALOG: CatalogEntry[] = [
       if (red < 58) return '泛红';
       return ctx.concerns.find((c) => c.id === 'sensitivity_appearance')?.label_zh ?? '纹理';
     },
-    whyTemplate: (ctx) => {
-      const red = dim(ctx.perception, 'redness');
-      const tex = dim(ctx.perception, 'texture');
-      return `质地为霜状洁面。氨基酸体系卸除防晒与日间残留，对应本次泛红（约 ${red}）与纹理（约 ${tex}）观感，减少两颊被洗紧的风险。晚间第一步，温水洗净即可。边界：不与强清洁同晚叠加。`;
-    },
+    whyTemplate: () =>
+      '质地：霜状洁面，洗完不发紧。成分角色：氨基酸体系卸除防晒与日间残留，减少两颊被洗紧的风险。用法：晚间第一步，温水洗净即可。边界：不与强清洁同晚叠加；红感高时只留温和洁面。',
   },
   {
     slot: 'pm_serum',
@@ -302,11 +316,8 @@ const PRODUCT_CATALOG: CatalogEntry[] = [
       if (red <= even) return '泛红';
       return '色匀';
     },
-    whyTemplate: (ctx) => {
-      const red = dim(ctx.perception, 'redness');
-      const even = dim(ctx.perception, 'evenness');
-      return `质地轻薄易推开。植物舒缓成分对应本次可见的泛红（约 ${red}）与色匀（约 ${even}）信号。洁面后、保湿前使用，晚间为宜。边界：不替代防晒，亦不承诺医疗级消退；若未看到改善空间可维持观察。`;
-    },
+    whyTemplate: () =>
+      '质地：轻薄易推开。成分角色：植物舒缓对应泛红与色匀观感，不宣称医疗级消退。用法：洁面后、保湿前，晚间为宜。边界：不替代防晒；若不适或红感加重，停用并咨询专业人士。',
   },
   {
     slot: 'pm_treatment',
@@ -322,11 +333,8 @@ const PRODUCT_CATALOG: CatalogEntry[] = [
       if (tex < 55) return '纹理';
       return '细纹';
     },
-    whyTemplate: (ctx) => {
-      const red = dim(ctx.perception, 'redness');
-      const lines = dim(ctx.perception, 'fine_lines');
-      return `质地偏润但不厚重。舒缓保湿角色针对本次泛红（约 ${red}）与细纹观感（约 ${lines}），夜间在两颊与口周薄涂。节奏上可作晚间封层，T 区减量。边界：对应的是「看起来偏敏感、易干红」信号，非突击祛痘。`;
-    },
+    whyTemplate: () =>
+      '质地：偏润但不厚重，少香精感更佳。成分角色：舒缓保湿、减少外界摩擦感，不宣称治疗。用法：精简步骤的最后一步；刺激期可只留洁面+它，T区减量。边界：对应「看起来偏敏感、易干红」信号；持续加重请咨询专业人士。',
   },
   {
     slot: 'pm_moisturizer',
@@ -343,11 +351,8 @@ const PRODUCT_CATALOG: CatalogEntry[] = [
       if (lines <= glow) return '细纹';
       return '光泽';
     },
-    whyTemplate: (ctx) => {
-      const glow = dim(ctx.perception, 'glow');
-      const tex = dim(ctx.perception, 'texture');
-      return `质地滋润乳霜。夜间封层角色对应本次光泽（约 ${glow}）与纹理（约 ${tex}）观感，改善干哑铺垫。精华后使用，主要落在两颊。边界：偏油或混合倾向避开 T 区厚涂；不承诺淡纹时效。`;
-    },
+    whyTemplate: () =>
+      '质地：滋润乳霜，好推开。成分角色：夜间把水分留在表层，让光泽与纹路观感更舒服。用法：精华后使用，主要落在两颊，可薄层叠涂。边界：偏油或混油倾向避开T区厚涂；它不替代防晒与休息。',
   },
 ];
 
@@ -367,49 +372,31 @@ function pickConcerns(seed: number, count: number): Concern[] {
   });
 }
 
-function observationFor(
-  key: PerceptionKey,
-  value: number,
-  seed: number,
+function resolveTendencyTag(
   skinLabel: SkinTypeLabel,
   concerns: Concern[],
-): string {
+): TendencyTag {
   const has = (id: ConcernId) => concerns.some((c) => c.id === id);
-  const variants: Record<PerceptionKey, string[]> = {
-    glow:
-      value >= 70
-        ? ['本次影像可见面中反光较清晰，光泽分布相对均匀', '本次影像可见整体光泽感尚可']
-        : ['本次影像可见面中光泽偏弱，反光略显哑', '本次影像可见光泽集中不足，观感偏平'],
-    oil:
-      skinLabel === 'oil_prone' || has('oiliness') || value < 55
-        ? ['本次影像可见 T 区油光略多于两颊', '本次影像可见前额与鼻梁有轻微油光']
-        : skinLabel === 'dry_prone' || has('dryness_flakes')
-          ? ['本次影像可见出油信号不强，两颊偏干哑', '本次影像未看到明显油光，中部偏哑']
-          : ['本次影像可见出油与干燥信号大致平衡', '本次影像可见分区油光差异不大'],
-    pores:
-      value < 60 || has('pores')
-        ? ['本次影像可见鼻翼与 T 区毛孔更清晰', '本次影像可见局部毛孔纹理偏明显']
-        : ['本次影像可见毛孔观感相对收敛', '本次影像未看到大面积毛孔放大'],
-    texture:
-      value < 60 || has('texture') || has('dryness_flakes')
-        ? ['本次影像可见面颊纹理略粗', '本次影像可见局部肤感不够细腻']
-        : ['本次影像可见纹理相对平整', '本次影像未看到明显粗糙起伏'],
-    evenness:
-      value < 60 || has('pigmentation') || has('dullness')
-        ? ['本次影像可见面颊局部色调不均', '本次影像可见口周或面中轻微色差']
-        : ['本次影像可见色调分布相对均匀', '本次影像未看到明显成片色差'],
-    fine_lines:
-      value < 58
-        ? ['本次影像可见眼周或前额细纹略清晰', '本次影像可见局部细纹在侧光下更明显']
-        : ['本次影像可见细纹观感较轻', '本次影像未看到明显深纹走向'],
-    redness:
-      value < 60 || has('redness') || has('sensitivity_appearance')
-        ? ['本次影像可见两颊或鼻翼轻微泛红', '本次影像可见局部色调偏红']
-        : ['本次影像可见泛红信号不强', '本次影像未看到成片发红'],
-  };
-  const list = variants[key];
-  const idx = Math.floor(seeded(seed, value + key.length) * list.length);
-  return list[idx];
+  const sensitive =
+    has('redness') || has('sensitivity_appearance') || has('inflammation');
+  const dry =
+    skinLabel === 'dry_prone' || has('dryness_flakes') || has('texture');
+
+  if (sensitive && dry) return '干敏倾向';
+  if (sensitive) return '敏感波动感';
+
+  switch (skinLabel) {
+    case 'oil_prone':
+      return '油皮活跃感';
+    case 'dry_prone':
+      return '干皮缺水感';
+    case 'combination_prone':
+      return '混油倾向';
+    case 'balanced_prone':
+      return '中性偏稳';
+    default:
+      return '中性偏稳';
+  }
 }
 
 function buildPerception(
@@ -431,7 +418,6 @@ function buildPerception(
       : skinLabel === 'dry_prone'
         ? 8
         : 0;
-  // Higher = more comfortable / less oily appearance for display score
   const oil = clampScore(
     score +
       oilBias +
@@ -477,27 +463,46 @@ function buildPerception(
     redness,
   };
 
-  return FREE_DIM_ORDER.map((key) => {
+  return FREE_DIM_ORDER.map((key, i) => {
     const value = values[key];
+    const status: DimStatus = dimTierFromScore(value);
+    const variant = Math.floor(seeded(seed, 40 + i) * 2);
     return {
       key,
       label_zh: FREE_DIM_LABELS[key],
       value,
-      observation: observationFor(key, value, seed, skinLabel, concerns),
-      status: statusFromScore(value),
+      observation: pickDimSideNote(key, status, variant),
+      status,
+      detail: pickDimDetail(key, status),
     };
   });
 }
 
+/** 页头 ≤60字：优势 + 关注点 */
 function buildHeadline(
   perception: PerceptionDimension[],
-  skinTypeZh: string,
+  seed: number,
 ): string {
-  const highs = highestDims(perception, 1);
-  const lows = lowestDims(perception, 2);
-  const strength = highs[0]?.label_zh ?? '光泽';
-  const focus = lows.map((d) => d.label_zh).join('、');
-  return `可见${strength}相对占优，宜留意${focus}；倾向${skinTypeZh}。外观评估仅供护肤参考，非医疗诊断。`;
+  const high = highestDims(perception, 1)[0];
+  const low = lowestDims(perception, 1)[0];
+  const strength = high?.label_zh ?? '光泽';
+  const focus = low?.label_zh ?? '出油';
+  const useAlt = seeded(seed, 60) > 0.5;
+
+  if (useAlt) {
+    // 一眼看去，{优势画面}。若只选一个关注点，我会先看{关注点}。
+    // Only use side note as 优势画面 when that dim is 好
+    const scene =
+      high?.status === '好' && high.observation
+        ? high.observation
+        : `${strength}相对占优`;
+    const line = `一眼看去，${scene}。若只选一个关注点，我会先看${focus}。`;
+    return [...line].length <= 60
+      ? line
+      : `一眼看去，${strength}相对占优。若只选一个关注点，我会先看${focus}。`;
+  }
+
+  return `今天的优势在${strength}；更值得留意的是${focus}。`;
 }
 
 function selectProducts(seed: number, ctx: ProductWhyCtx): ProductItem[] {
@@ -534,7 +539,6 @@ function selectProducts(seed: number, ctx: ProductWhyCtx): ProductItem[] {
     }
   }
 
-  // Prefer AM order: cleanser → serum → moisturizer → sunscreen in display
   const slotOrder = [
     'am_cleanser',
     'am_serum',
@@ -563,7 +567,7 @@ function selectProducts(seed: number, ctx: ProductWhyCtx): ProductItem[] {
 
 /**
  * Mock analyzer — deterministic from gender + age + imageUri seed.
- * Schema v1.4: 7 free dims, product mapped_concern, routine 清洁→精华→保湿→防晒.
+ * Schema v1.4 + copy pack v1: skin_tendency, 好/中/差旁注, paid detail bodies.
  */
 export function analyzeSkin(input: AnalysisInput): AnalysisResult {
   const seedStr = `${input.gender}|${input.age}|${input.imageUri}`;
@@ -580,12 +584,18 @@ export function analyzeSkin(input: AnalysisInput): AnalysisResult {
   const tier = tierFromScore(score);
 
   const typeIdx = Math.floor(seeded(seed, 4) * SKIN_TYPES.length);
-  const skinType = SKIN_TYPES[typeIdx];
+  const skinTypeBase = SKIN_TYPES[typeIdx];
 
   const concernCount = 2 + Math.floor(seeded(seed, 5) * 2); // 2–3
   const concerns = pickConcerns(seed, concernCount);
 
-  const perception = buildPerception(seed, score, skinType.label, concerns);
+  const tendencyTag = resolveTendencyTag(skinTypeBase.label, concerns);
+  const skin_tendency = buildSkinTendency(
+    tendencyTag,
+    Math.floor(seeded(seed, 14) * 3),
+  );
+
+  const perception = buildPerception(seed, score, skinTypeBase.label, concerns);
 
   const breakdown = {
     glow: clampScore(score + Math.floor((seeded(seed, 6) - 0.5) * 16)),
@@ -599,7 +609,7 @@ export function analyzeSkin(input: AnalysisInput): AnalysisResult {
   const confidence = 0.62 + seeded(seed, 10) * 0.28;
   const quality = 0.7 + seeded(seed, 11) * 0.25;
 
-  const headline = buildHeadline(perception, skinType.label_zh);
+  const headline = buildHeadline(perception, seed);
 
   const zoneNotes = concerns.flatMap((c) =>
     c.regions.slice(0, 1).map((zone) => ({
@@ -617,8 +627,8 @@ export function analyzeSkin(input: AnalysisInput): AnalysisResult {
   });
 
   const productCtx: ProductWhyCtx = {
-    skinTypeZh: skinType.label_zh,
-    skinLabel: skinType.label,
+    skinTypeZh: tendencyTag,
+    skinLabel: skinTypeBase.label,
     concerns,
     perception,
     score,
@@ -627,35 +637,31 @@ export function analyzeSkin(input: AnalysisInput): AnalysisResult {
   const items = selectProducts(seed, productCtx);
 
   const evidenceMap: Record<SkinTypeLabel, string[]> = {
-    oil_prone: ['本次影像可见 T 区油光', '本次影像可见面中反光略强'],
-    dry_prone: ['本次影像可见两颊纹理偏干', '本次影像可见光泽感偏哑'],
+    oil_prone: ['整张脸带着一层细细的光膜', '毛孔在光线里更明显一点'],
+    dry_prone: ['两颊纹理偏干', '光泽偏哑，像还喝不够水'],
     combination_prone: [
-      '本次影像可见 T 区与两颊观感差异',
-      '本次影像可见中部偏油、外侧偏干',
+      'T区与两颊观感有差异',
+      '中间先亮、两侧还相对安静',
     ],
     balanced_prone: [
-      '本次影像可见整体油水平衡较好',
-      '本次影像可见分区差异不大',
+      '光比较均匀地铺着',
+      '分区差异不大，状态偏干净',
     ],
-    unclear: ['当前光线下暂难判断'],
+    unclear: ['当前光线下暂难判断，先给保守读法'],
   };
 
   const oil = dim(perception, 'oil');
   const red = dim(perception, 'redness');
   const pores = dim(perception, 'pores');
-  const tex = dim(perception, 'texture');
-  const even = dim(perception, 'evenness');
-  const glow = dim(perception, 'glow');
-  const lines = dim(perception, 'fine_lines');
 
-  // Routine order: 清洁 → (精华 optional) → 保湿 → 防晒
   const includeSerum = pores < 62 || oil < 58 || red < 58 || seeded(seed, 30) > 0.35;
 
   const amRoutine = [
     {
       step: 1,
       action: '清洁',
-      purpose: `清除隔夜皮脂与灰尘。对应本次出油观感（约 ${oil}），温和洁面即可，避免过度清洁加重泛红。`,
+      purpose:
+        '清除隔夜皮脂与灰尘。对应今天的出油观感，温和洁面即可，避免过度清洁加重泛红。',
       product_type: 'gentle_cleanser',
     },
     ...(includeSerum
@@ -663,7 +669,8 @@ export function analyzeSkin(input: AnalysisInput): AnalysisResult {
           {
             step: 2,
             action: '精华',
-            purpose: `针对本次毛孔（约 ${pores}）或泛红（约 ${red}）做轻量护理。薄涂一层，为保湿铺垫。`,
+            purpose:
+              '针对毛孔或泛红做轻量护理。薄涂一层，为保湿铺垫；不适就先跳过。',
             product_type: 'serum',
           },
         ]
@@ -671,13 +678,15 @@ export function analyzeSkin(input: AnalysisInput): AnalysisResult {
     {
       step: includeSerum ? 3 : 2,
       action: '保湿',
-      purpose: `维护日间屏障外观。纹理观感约 ${tex}，选择轻薄质地，减少闷厚感。`,
+      purpose:
+        '维护日间屏障外观。纹理若偏干，选轻薄质地薄层叠润，减少闷厚感。',
       product_type: 'lightweight_moisturizer',
     },
     {
       step: includeSerum ? 4 : 3,
       action: '防晒',
-      purpose: `日间基础防护。对应色匀（约 ${even}）与光泽（约 ${glow}），降低紫外线拉开分区色差的风险。`,
+      purpose:
+        '日间基础防护。对应色匀与光泽观感，降低紫外线拉开分区色差的风险。',
       product_type: 'sunscreen',
     },
   ];
@@ -686,19 +695,21 @@ export function analyzeSkin(input: AnalysisInput): AnalysisResult {
     {
       step: 1,
       action: '清洁',
-      purpose: `卸除防晒与日间残留。为毛孔（约 ${pores}）区域减少堵塞风险，温水洗净即可。`,
+      purpose:
+        '卸除防晒与日间残留。为毛孔区域减少堵塞风险，温水洗净即可。',
       product_type: 'gentle_cleanser',
     },
     {
       step: 2,
       action: '精华',
-      purpose: `对应本次关注点（${concerns.map((c) => c.label_zh).join('、')}）。以舒缓或控油观感为主，不强刺激。`,
+      purpose: `对应本次关注点（${concerns.map((c) => c.label_zh).join('、')}）。以舒缓或清透观感为主，不强刺激。`,
       product_type: 'serum',
     },
     {
       step: 3,
       action: '保湿',
-      purpose: `封存水分，缓和干燥或泛红外观（约 ${red}）。细纹观感约 ${lines}；分区涂抹，T 区薄、两颊可稍厚。`,
+      purpose:
+        '封存水分，缓和干燥或泛红外观。分区涂抹：T区薄、两颊可稍厚；按耐受微调。',
       product_type: 'night_moisturizer',
     },
   ];
@@ -706,6 +717,7 @@ export function analyzeSkin(input: AnalysisInput): AnalysisResult {
   const lowLabels = lowestDims(perception, 2)
     .map((d) => d.label_zh)
     .join('、');
+  const highLabel = highestDims(perception, 1)[0]?.label_zh ?? '光泽';
 
   return {
     schema_version: '1.4',
@@ -727,16 +739,17 @@ export function analyzeSkin(input: AnalysisInput): AnalysisResult {
       tier_name_en: tier.nameEn,
     },
     skin_type: {
-      label: skinType.label,
-      label_zh: skinType.label_zh,
-      evidence: evidenceMap[skinType.label],
+      label: skinTypeBase.label,
+      label_zh: tendencyTag,
+      evidence: evidenceMap[skinTypeBase.label],
     },
+    skin_tendency,
     concerns,
     perception_scores: perception,
     score_breakdown_paid: breakdown,
     summary_free: { headline },
     report_paid: {
-      full_summary: `基于当前自拍的外观评估：肤质评分 ${score}（${tier.name}），倾向${skinType.label_zh}。七维观感中宜留意${lowLabels}。关注点包括${concerns.map((c) => c.label_zh).join('、')}。以下分区说明与步骤仅供护肤参考，非医疗诊断，无效果承诺。`,
+      full_summary: `今天主画面更接近「${tendencyTag}」。优势侧在${highLabel}，更值得留意的是${lowLabels}。关注点包括${concerns.map((c) => c.label_zh).join('、')}。以下分区与步骤是可执行的节奏参考，按耐受微调；不构成医疗诊断或效果承诺。`,
       zone_notes: uniqueZones,
       priority_order: concerns.map((c) => c.id),
     },
@@ -744,11 +757,14 @@ export function analyzeSkin(input: AnalysisInput): AnalysisResult {
       duration_days: 14,
       am: amRoutine,
       pm: pmRoutine,
-      weekly: ['可每周 1 次温和去角质（若皮肤外观不适则跳过）'],
-      avoid: ['短期内叠加多种强酸/高浓度刺激性成分', '过度清洁导致紧绷观感'],
+      weekly: ['可每周 1 次温和护理（若外观不适则跳过）'],
+      avoid: [
+        '短期内叠加多种强酸/高浓度刺激性成分',
+        '过度清洁导致紧绷或泛红观感',
+      ],
       lifestyle_tips: [
-        '作息尽量规律，避免熬夜加重暗沉观感',
-        '注意补水，室内干燥时可使用加湿器',
+        '作息尽量规律，熬夜常让暗沉和细纹更有存在感',
+        '室内干燥时可补水或使用加湿器，保湿更稳',
       ],
     },
     products_paid: {

@@ -6,6 +6,11 @@ import { useSession } from '../context/SessionContext';
 import { SecondaryButton, AccordionSection } from '../components/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, DISCLAIMER, tierFromScore } from '../theme/tiers';
+import {
+  PRODUCTS_LIST_GUIDE,
+  REPORT_SECTION_LEADS,
+  UNLOCK_COPY,
+} from '../lib/copyPack';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PaidReport'>;
 
@@ -25,9 +30,9 @@ export function PaidReportScreen({ navigation }: Props) {
   }
 
   const tier = tierFromScore(result.skin_score.value);
-  const bd = result.score_breakdown_paid;
   const perception = result.perception_scores;
   const lifestyle = result.routine_paid.lifestyle_tips ?? [];
+  const leads = REPORT_SECTION_LEADS;
 
   return (
     <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
@@ -36,13 +41,19 @@ export function PaidReportScreen({ navigation }: Props) {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.brand}>Averie · 完整报告</Text>
+        <Text style={styles.unlockBanner}>{UNLOCK_COPY}</Text>
 
         {/* 1. 总览 — default expanded */}
-        <AccordionSection title="总览" defaultExpanded>
+        <AccordionSection
+          title={leads.report_overview.title}
+          lead={leads.report_overview.lead}
+          defaultExpanded
+        >
           <Text style={styles.bigScore}>{result.skin_score.value}</Text>
           <Text style={[styles.tier, { color: tier.accent }]}>
             {result.skin_score.tier_name} · {result.skin_type.label_zh}
           </Text>
+          <Text style={styles.tendency}>{result.skin_tendency}</Text>
           <Text style={styles.summary}>{result.report_paid.full_summary}</Text>
           {result.concerns.map((c) => (
             <View key={c.id} style={styles.concern}>
@@ -53,25 +64,29 @@ export function PaidReportScreen({ navigation }: Props) {
         </AccordionSection>
 
         {/* 2. 分项详解 */}
-        <AccordionSection title="分项详解">
+        <AccordionSection
+          title={leads.details.title}
+          lead={leads.details.lead}
+        >
           {perception.map((p) => (
             <View key={p.key} style={styles.percBlock}>
               <ScoreBar label={p.label_zh} value={p.value} />
-              <Text style={styles.percObs}>{p.observation}</Text>
               {p.status ? (
                 <Text style={styles.percStatus}>{p.status}</Text>
               ) : null}
+              <Text style={styles.percObs}>{p.observation}</Text>
+              {p.detail ? (
+                <Text style={styles.percDetail}>{p.detail}</Text>
+              ) : null}
             </View>
           ))}
-          <Text style={styles.subHead}>综合分项</Text>
-          <ScoreBar label="光泽观感" value={bd.glow} />
-          <ScoreBar label="匀净度" value={bd.evenness} />
-          <ScoreBar label="澄净度" value={bd.clarity} />
-          <ScoreBar label="屏障观感" value={bd.barrier_appearance} />
         </AccordionSection>
 
         {/* 3. 分区提示 */}
-        <AccordionSection title="分区提示">
+        <AccordionSection
+          title={leads.zone_tips.title}
+          lead={leads.zone_tips.lead}
+        >
           {result.report_paid.zone_notes.map((z) => (
             <View key={z.zone} style={styles.zone}>
               <Text style={styles.zoneTitle}>{z.zone_zh}</Text>
@@ -81,7 +96,10 @@ export function PaidReportScreen({ navigation }: Props) {
         </AccordionSection>
 
         {/* 4. 14天步骤 */}
-        <AccordionSection title="14天步骤">
+        <AccordionSection
+          title={leads.plan_14d.title}
+          lead={leads.plan_14d.lead}
+        >
           <Text style={styles.subHead}>晨间</Text>
           {result.routine_paid.am.map((s) => (
             <View key={`am-${s.step}`} style={styles.step}>
@@ -114,11 +132,12 @@ export function PaidReportScreen({ navigation }: Props) {
           ) : null}
         </AccordionSection>
 
-        {/* 5. 产品推荐 — keep 品类→名称型号→对应关注点→理由 */}
-        <AccordionSection title="产品推荐">
-          <Text style={styles.noLinkNote}>
-            仅展示品类、名称与型号及推荐理由，无购买链接、无广告按钮。
-          </Text>
+        {/* 5. 产品推荐 */}
+        <AccordionSection
+          title={leads.products.title}
+          lead={leads.products.lead}
+        >
+          <Text style={styles.noLinkNote}>{PRODUCTS_LIST_GUIDE}</Text>
           {result.products_paid.items.map((p) => (
             <View key={p.slot} style={styles.product}>
               <View style={styles.productCatWrap}>
@@ -136,7 +155,7 @@ export function PaidReportScreen({ navigation }: Props) {
         </AccordionSection>
 
         {/* 6. 注意事项 */}
-        <AccordionSection title="注意事项">
+        <AccordionSection title={leads.notes.title} lead={leads.notes.lead}>
           {result.routine_paid.avoid.map((a) => (
             <Text key={a} style={styles.bulletMuted}>
               · 避开：{a}
@@ -192,7 +211,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textMuted,
     letterSpacing: 1.5,
-    marginBottom: 14,
+    marginBottom: 10,
+  },
+  unlockBanner: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 20,
+    marginBottom: 16,
   },
   bigScore: {
     fontSize: 64,
@@ -200,7 +225,13 @@ const styles = StyleSheet.create({
     color: colors.text,
     letterSpacing: -3,
   },
-  tier: { fontSize: 16, fontWeight: '700', marginBottom: 14, marginTop: 2 },
+  tier: { fontSize: 16, fontWeight: '700', marginBottom: 8, marginTop: 2 },
+  tendency: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 20,
+    marginBottom: 12,
+  },
   summary: {
     color: colors.textSecondary,
     fontSize: 14,
@@ -214,18 +245,29 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 10,
   },
-  percBlock: { marginBottom: 12 },
+  percBlock: {
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
   percObs: {
     color: colors.textMuted,
     fontSize: 12,
     lineHeight: 17,
-    marginTop: 2,
-    marginBottom: 2,
+    marginTop: 4,
+    marginBottom: 6,
   },
   percStatus: {
-    color: colors.textMuted,
+    color: colors.primary,
     fontSize: 11,
-    marginBottom: 4,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  percDetail: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 20,
   },
   concern: { marginBottom: 12 },
   concernTitle: { color: colors.text, fontWeight: '700', fontSize: 15 },

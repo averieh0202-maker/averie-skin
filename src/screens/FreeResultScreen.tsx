@@ -14,6 +14,7 @@ import { PrimaryButton, SecondaryButton } from '../components/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, DISCLAIMER, tierFromScore } from '../theme/tiers';
 import { PerceptionDimension } from '../types/analysis';
+import { CTA_COPY } from '../lib/copyPack';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'FreeResult'>;
 
@@ -103,7 +104,7 @@ export function FreeResultScreen({ navigation }: Props) {
         >
           <Text style={styles.tendencyLabel}>肤质倾向</Text>
           <Text style={[styles.tendencyValue, { color: tier.scoreColor }]}>
-            {result.skin_type.label_zh}
+            {result.skin_tendency}
           </Text>
           <Text style={styles.headline}>{result.summary_free.headline}</Text>
         </View>
@@ -124,10 +125,10 @@ export function FreeResultScreen({ navigation }: Props) {
 
         <View style={styles.ctaBlock}>
           <PrimaryButton
-            label="解锁完整报告 · ¥9.9"
+            label={CTA_COPY.primary}
             onPress={() => navigation.navigate('Paywall')}
           />
-          <Text style={styles.ctaHint}>单次解锁 · 无订阅 · 无复测入口</Text>
+          <Text style={styles.ctaHint}>{CTA_COPY.secondary}</Text>
         </View>
 
         <Text style={styles.disclaimer}>{DISCLAIMER}</Text>
@@ -287,9 +288,10 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   tendencyValue: {
-    fontSize: 26,
+    fontSize: 18,
     fontWeight: '700',
-    letterSpacing: -0.3,
+    letterSpacing: -0.2,
+    lineHeight: 26,
     marginBottom: 10,
   },
   headline: {

@@ -124,4 +124,4 @@ export const colors = {
 };
 
 export const DISCLAIMER =
-  '外观肤况评估与护肤参考，不能替代医疗建议。非医疗诊断，无任何效果承诺。';
+  'Averie Skin基于自拍图像给出护肤向观察与护理方向参考，不构成医疗诊断或治疗效果承诺。';

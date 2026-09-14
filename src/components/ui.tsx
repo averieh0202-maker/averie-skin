@@ -147,10 +147,13 @@ export function SectionCard({
 /** Collapsible section card for paid report accordion */
 export function AccordionSection({
   title,
+  lead,
   defaultExpanded = false,
   children,
 }: {
   title: string;
+  /** Section lead-in ≤36字 (copy pack) */
+  lead?: string;
   defaultExpanded?: boolean;
   children: React.ReactNode;
 }) {
@@ -170,7 +173,12 @@ export function AccordionSection({
         <Text style={styles.sectionTitleCompact}>{title}</Text>
         <Text style={styles.accordionChevron}>{expanded ? '▾' : '▸'}</Text>
       </Pressable>
-      {expanded ? <View style={styles.accordionBody}>{children}</View> : null}
+      {expanded ? (
+        <View style={styles.accordionBody}>
+          {lead ? <Text style={styles.accordionLead}>{lead}</Text> : null}
+          {children}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -299,5 +307,11 @@ const styles = StyleSheet.create({
   },
   accordionBody: {
     marginTop: 14,
+  },
+  accordionLead: {
+    color: colors.textMuted,
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 12,
   },
 });
