@@ -29,12 +29,14 @@ export type ConcernId =
   | 'sensitivity_appearance'
   | 'other';
 
+/** Face zones for zone_tips — demos should cover several when evidence exists */
 export type FaceRegion =
   | 'forehead'
   | 't_zone'
   | 'cheeks'
   | 'chin'
   | 'nose'
+  | 'periocular'
   | 'perioral'
   | 'full_face';
 
@@ -58,6 +60,9 @@ export type PerceptionKey =
   | 'tone_evenness'
   | 'fine_lines'
   | 'redness';
+
+/** Analyzer engine selection */
+export type AnalyzerEngine = 'mock' | 'qwen' | 'auto';
 
 export interface AnalysisInput {
   gender: Gender;
@@ -148,7 +153,7 @@ export interface AnalysisResult {
   schema_version: '1.4';
   disclaimer: string;
   meta: {
-    engine: 'mock';
+    engine: 'mock' | 'qwen' | 'llm';
     model_id: string;
     market: 'cn' | 'overseas';
     analyzed_at: string;
@@ -157,6 +162,8 @@ export interface AnalysisResult {
     image_quality_score: number;
     /** Kept for schema; never display as percentage in UI */
     overall_confidence: number;
+    /** Set when Qwen failed and Mock was used */
+    fallback_reason?: string;
   };
   skin_score: SkinScore;
   skin_type: SkinType;
@@ -198,4 +205,6 @@ export interface SessionState {
   imageUri: string | null;
   result: AnalysisResult | null;
   unlocked: boolean;
+  /** mock | qwen | auto (auto = Qwen when DashScope key present & market cn) */
+  analyzerEngine: AnalyzerEngine;
 }

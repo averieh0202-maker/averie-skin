@@ -17,7 +17,7 @@ import { colors, DISCLAIMER } from '../theme/tiers';
 type Props = NativeStackScreenProps<RootStackParamList, 'Selfie'>;
 
 export function SelfieScreen({ navigation }: Props) {
-  const { imageUri, setImageUri, runAnalysis } = useSession();
+  const { imageUri, setImageUri, runAnalysis, analyzerEngine } = useSession();
   const [uri, setUri] = useState<string | null>(imageUri);
   const [busy, setBusy] = useState(false);
 
@@ -60,16 +60,29 @@ export function SelfieScreen({ navigation }: Props) {
     }
   }
 
-  function onAnalyze() {
+  async function onAnalyze() {
     if (!uri) return;
     setBusy(true);
     setImageUri(uri);
-    setTimeout(() => {
-      runAnalysis();
-      setBusy(false);
+    try {
+      const { notice } = await runAnalysis({ imageUri: uri });
+      if (notice) {
+        Alert.alert('分析提示', notice);
+      }
       navigation.replace('FreeResult');
-    }, 900);
+    } catch {
+      Alert.alert('分析失败', '请稍后重试，或在首页改回 Mock 引擎。');
+    } finally {
+      setBusy(false);
+    }
   }
+
+  const engineHint =
+    analyzerEngine === 'qwen'
+      ? '当前：Qwen（百炼 qwen3-vl-plus）'
+      : analyzerEngine === 'auto'
+        ? '当前：Auto（有 Key 走 Qwen）'
+        : '当前：Mock 演示';
 
   return (
     <Screen>
@@ -82,6 +95,7 @@ export function SelfieScreen({ navigation }: Props) {
       <Subtitle>
         请正对光线充足处自拍，或从相册选择正面照。仅使用性别、年龄与自拍，无需问卷。
       </Subtitle>
+      <Text style={styles.engineHint}>{engineHint}</Text>
 
       <View style={styles.previewWrap}>
         {uri ? (
@@ -110,7 +124,7 @@ export function SelfieScreen({ navigation }: Props) {
 
       <View style={styles.spacer} />
       <PrimaryButton
-        label="开始分析"
+        label={busy ? '分析中…' : '开始分析'}
         disabled={!uri}
         loading={busy}
         onPress={onAnalyze}
@@ -135,6 +149,11 @@ const styles = StyleSheet.create({
   },
   dotActive: { backgroundColor: '#E8A0B0' },
   dotDone: { backgroundColor: 'rgba(232,160,176,0.45)' },
+  engineHint: {
+    color: colors.textMuted,
+    fontSize: 12,
+    marginBottom: 12,
+  },
   previewWrap: {
     alignItems: 'center',
     marginBottom: 18,

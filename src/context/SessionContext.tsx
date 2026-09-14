@@ -5,17 +5,28 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { AnalysisResult, Gender, SessionState } from '../types/analysis';
-import { analyzeSkin } from '../lib/mockAnalyzer';
+import {
+  AnalysisResult,
+  AnalyzerEngine,
+  Gender,
+  SessionState,
+} from '../types/analysis';
+import { analyzeSkinRouted } from '../lib/analyze';
+import { getEnvDefaultEngine, hasDashScopeKey } from '../lib/config';
 
 interface SessionContextValue extends SessionState {
   setGender: (g: Gender) => void;
   setAge: (age: number) => void;
   setImageUri: (uri: string) => void;
-  runAnalysis: () => AnalysisResult | null;
+  setAnalyzerEngine: (e: AnalyzerEngine) => void;
+  /** Async analysis; pass imageUri when state may not have flushed yet */
+  runAnalysis: (opts?: {
+    imageUri?: string;
+  }) => Promise<{ result: AnalysisResult | null; notice?: string }>;
   unlock: () => void;
   /** Full reset — starting over means paying again next time */
   resetSession: () => void;
+  hasDashScopeKey: boolean;
 }
 
 const initial: SessionState = {
@@ -24,6 +35,7 @@ const initial: SessionState = {
   imageUri: null,
   result: null,
   unlocked: false,
+  analyzerEngine: getEnvDefaultEngine(),
 };
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -43,28 +55,46 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setState((s) => ({ ...s, imageUri: uri }));
   }, []);
 
-  const runAnalysis = useCallback(() => {
-    let next: AnalysisResult | null = null;
-    setState((s) => {
-      if (s.gender == null || s.age == null || !s.imageUri) return s;
-      next = analyzeSkin({
-        gender: s.gender,
-        age: s.age,
-        imageUri: s.imageUri,
-      });
-      // New analysis always starts locked — one-time unlock per analysis
-      return { ...s, result: next, unlocked: false };
-    });
-    return next;
+  const setAnalyzerEngine = useCallback((e: AnalyzerEngine) => {
+    setState((s) => ({ ...s, analyzerEngine: e }));
   }, []);
+
+  const runAnalysis = useCallback(
+    async (opts?: { imageUri?: string }) => {
+      const gender = state.gender;
+      const age = state.age;
+      const imageUri = opts?.imageUri ?? state.imageUri;
+      if (gender == null || age == null || !imageUri) {
+        return { result: null };
+      }
+
+      const outcome = await analyzeSkinRouted(
+        { gender, age, imageUri },
+        state.analyzerEngine,
+      );
+
+      setState((s) => ({
+        ...s,
+        imageUri,
+        result: outcome.result,
+        unlocked: false,
+      }));
+
+      return { result: outcome.result, notice: outcome.notice };
+    },
+    [state.gender, state.age, state.imageUri, state.analyzerEngine],
+  );
 
   const unlock = useCallback(() => {
     setState((s) => ({ ...s, unlocked: true }));
   }, []);
 
   const resetSession = useCallback(() => {
-    setState(initial);
-  }, []);
+    setState({
+      ...initial,
+      analyzerEngine: state.analyzerEngine, // keep engine preference
+    });
+  }, [state.analyzerEngine]);
 
   const value = useMemo(
     () => ({
@@ -72,11 +102,22 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setGender,
       setAge,
       setImageUri,
+      setAnalyzerEngine,
       runAnalysis,
       unlock,
       resetSession,
+      hasDashScopeKey: hasDashScopeKey(),
     }),
-    [state, setGender, setAge, setImageUri, runAnalysis, unlock, resetSession],
+    [
+      state,
+      setGender,
+      setAge,
+      setImageUri,
+      setAnalyzerEngine,
+      runAnalysis,
+      unlock,
+      resetSession,
+    ],
   );
 
   return (

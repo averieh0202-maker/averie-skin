@@ -15,14 +15,32 @@ npx expo start
 
 然后用 Expo Go（iOS）扫码，或按 `i` / `w` 打开模拟器 / Web。
 
+## Averie 小白三步（接 Qwen）
+
+1. **拉代码**：`git pull origin main`
+2. **在项目根目录创建 `.env`（不要提交）**，写入这一行（把 Key 换成你自己的）：
+   ```bash
+   EXPO_PUBLIC_DASHSCOPE_API_KEY=你的百炼Key
+   ```
+   可选同时关掉强制 Mock：
+   ```bash
+   EXPO_PUBLIC_USE_MOCK=0
+   EXPO_PUBLIC_ANALYZER_MARKET=cn
+   ```
+3. **重启 Expo**（改 `.env` 后必须重启）：`npx expo start`，首页选 **Qwen**（或 Auto），自拍后扫码用 Expo Go 测试。失败会弹友好提示并自动回退 Mock。
+
+> ⚠️ `EXPO_PUBLIC_*` 仅供 **Expo Go 本地测试**。Key 会进客户端 JS bundle，**永远不要 commit `.env`**。正式上线必须改成 **后端代理**，不要把生产 Key 打进 App。
+
+也可使用 `DASHSCOPE_API_KEY=`（经 `app.config.js` 注入 `extra`）；Expo Go 直连测试仍推荐 `EXPO_PUBLIC_DASHSCOPE_API_KEY`。
+
 ## 可点击流程
 
-1. **性别**（女 / 男 / 不愿说明）
+1. **性别**（女 / 男 / 不愿说明）+ **分析引擎开关**（Mock / Qwen / Auto）
 2. **年龄**（13–99）
 3. **自拍**（相机或相册）
-4. **免费结果**：巨大肤质评分 0–100 + 段位徽章 + 肤质倾向；把握仅页脚小字
+4. **免费结果**：巨大肤质评分 0–100 + 段位徽章 + 肤质倾向
 5. **单次付费解锁**（Stub 支付，演示用）
-6. **完整付费报告**：分项分、关注点与分区白话、14 天早晚步骤、产品「名称 + 型号」
+6. **完整付费报告**：七维详解、分区提示（额头/鼻子/眼周/脸颊/下颌·口周）、14 天步骤、产品
 
 **无护肤问卷。** 结果页**无复测入口**；重新走流程 = 再次付费。
 
@@ -40,69 +58,53 @@ npx expo start
 
 ```
 App.tsx
-└── SessionProvider          # 性别 / 年龄 / 自拍 / 结果 / 解锁状态
-    └── RootNavigator        # React Navigation native stack
-        ├── GenderScreen
+└── SessionProvider
+    └── RootNavigator
+        ├── GenderScreen      # Mock / Qwen / Auto 开关
         ├── AgeScreen
-        ├── SelfieScreen     # expo-image-picker
-        ├── FreeResultScreen # 可分享主视觉
-        ├── PaywallScreen    # Stub 单次支付
-        └── PaidReportScreen # 完整报告（无外链）
+        ├── SelfieScreen      # 异步分析 + 失败提示
+        ├── FreeResultScreen
+        ├── PaywallScreen
+        └── PaidReportScreen  # 总览/分项/分区/计划/产品/注意
 ```
 
 | 路径 | 职责 |
 |------|------|
-| `src/types/analysis.ts` | Schema v1.4 类型 |
-| `src/lib/mockAnalyzer.ts` | 本地 Mock 引擎（按 gender/age/uri 种子出分） |
-| `src/theme/tiers.ts` | 段位视觉与免责声明 |
-| `src/context/SessionContext.tsx` | 会话状态；`unlock` 仅对本分析一次 |
-| `src/screens/*` | 各步 UI |
-| `src/navigation/*` | 路由 |
+| `src/types/analysis.ts` | Schema v1.4（含 periocular 眼周） |
+| `src/lib/mockAnalyzer.ts` | 本地 Mock（默认） |
+| `src/lib/zoneTips.ts` | 多分区 zone_tips（防脸颊-only） |
+| `src/lib/analyze.ts` | 路由：Mock ↔ Qwen |
+| `src/lib/qwenAnalyzer.ts` | 百炼 `qwen3-vl-plus` 视觉调用 |
+| `src/lib/mapLlmToResult.ts` | LLM JSON → 七维/倾向/分区/付费结构 |
+| `src/lib/config.ts` | `expo-constants` 读取 env |
+| `app.config.js` | 把 `.env` 注入 `extra` |
+| `.env.example` | Key 变量名模板（无真实密钥） |
+
+### 环境变量（精确名称）
+
+| 变量 | 作用 |
+|------|------|
+| `EXPO_PUBLIC_USE_MOCK` | `1` 默认 Mock；`0` 有 Key 时倾向 Qwen |
+| `EXPO_PUBLIC_ANALYZER_MARKET` | `cn` \| `overseas` |
+| `EXPO_PUBLIC_DASHSCOPE_API_KEY` | 百炼 Key（Expo Go 测试用） |
+| `DASHSCOPE_API_KEY` | 同上（经 app.config 注入） |
+
+**切勿提交** `.env` / `.env.local`（已在 `.gitignore`）。Averie 自行把 Key 贴进本地 `.env`，不要把 Key 发到聊天。
+
+### 模型路由
+
+| 市场 | 主模型 | 失败 |
+|------|--------|------|
+| 中国 | **qwen3-vl-plus**（DashScope 兼容模式） | 友好提示 + **Mock** |
+| 海外 | 预留 gemini / gpt | 暂用 Mock |
+
+输出对齐：七维 + 倾向 + report sections（overview / details / zone_tips / plan / products / notes）。
 
 ### 付费规则（代码层）
 
 - `runAnalysis()` 每次将 `unlocked` 重置为 `false`
 - 免费 / 付费结果页**不提供「再测一次」按钮**
 - 「结束并回到首页」会 `resetSession()`；再次分析需重新付费
-
-### 产品展示规则
-
-- 付费产品区只显示 **名称 + 型号** + 简短理由
-- **无**外链、购买按钮、佣金话术
-
-## Mock → 真实 LLM 接入点
-
-当前：`src/lib/mockAnalyzer.ts` 的 `analyzeSkin()`。
-
-未来替换为区域路由（同一套 Schema）：
-
-| 市场 | 主模型 | 备援 | 约每次成本（CNY） |
-|------|--------|------|-------------------|
-| 中国 | **qwen3-vl-plus** | deepseek-flash | ≈¥0.01 / ≈¥0.006 |
-| 海外 | **gemini-2.5-flash** | gpt-4o-mini | ≈¥0.02 / 视图片 token |
-
-建议接入形状：
-
-```ts
-// src/lib/analyze.ts（未来）
-export async function analyzeSkin(input: AnalysisInput, market: 'cn' | 'overseas') {
-  if (__DEV__ && process.env.EXPO_PUBLIC_USE_MOCK !== '0') {
-    return mockAnalyze(input); // 现有 mockAnalyzer
-  }
-  const route = market === 'cn'
-    ? { primary: 'qwen3-vl-plus', fallback: 'deepseek-flash' }
-    : { primary: 'gemini-2.5-flash', fallback: 'gpt-4o-mini' };
-  // 调用后端；校验 JSON 符合 schema_version 1.4
-  // Perfect Corp 不在范围内
-}
-```
-
-后端应：
-
-1. 收图 + gender + age（仅此三项输入）
-2. 按市场选模型，失败切备援
-3. 强制输出合法 JSON + 段位与分数一致
-4. 过滤效果承诺句式；产品字段不得含 URL
 
 ## 免责声明
 

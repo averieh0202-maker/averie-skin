@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet, Text, Pressable } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { useSession } from '../context/SessionContext';
-import { Gender } from '../types/analysis';
+import { AnalyzerEngine, Gender } from '../types/analysis';
 import {
   OptionCard,
   PrimaryButton,
@@ -12,7 +12,7 @@ import {
   Title,
   DisclaimerFooter,
 } from '../components/ui';
-import { DISCLAIMER } from '../theme/tiers';
+import { DISCLAIMER, colors } from '../theme/tiers';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Gender'>;
 
@@ -22,8 +22,21 @@ const OPTIONS: Array<{ value: Gender; label: string; emoji: string }> = [
   { value: 'unspecified', label: '不愿说明', emoji: '·' },
 ];
 
+const ENGINE_OPTS: Array<{ value: AnalyzerEngine; label: string; hint: string }> =
+  [
+    { value: 'mock', label: 'Mock', hint: '本地演示' },
+    { value: 'qwen', label: 'Qwen', hint: '百炼视觉' },
+    { value: 'auto', label: 'Auto', hint: '有 Key 用 Qwen' },
+  ];
+
 export function GenderScreen({ navigation }: Props) {
-  const { gender, setGender } = useSession();
+  const {
+    gender,
+    setGender,
+    analyzerEngine,
+    setAnalyzerEngine,
+    hasDashScopeKey,
+  } = useSession();
   const [selected, setSelected] = useState<Gender | null>(gender);
 
   return (
@@ -47,6 +60,32 @@ export function GenderScreen({ navigation }: Props) {
             onPress={() => setSelected(o.value)}
           />
         ))}
+      </View>
+
+      <View style={styles.engineBlock}>
+        <Text style={styles.engineTitle}>分析引擎（开发/测试）</Text>
+        <View style={styles.engineRow}>
+          {ENGINE_OPTS.map((e) => {
+            const on = analyzerEngine === e.value;
+            return (
+              <Pressable
+                key={e.value}
+                onPress={() => setAnalyzerEngine(e.value)}
+                style={[styles.engineChip, on && styles.engineChipOn]}
+              >
+                <Text style={[styles.engineLabel, on && styles.engineLabelOn]}>
+                  {e.label}
+                </Text>
+                <Text style={styles.engineHint}>{e.hint}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Text style={styles.engineNote}>
+          {hasDashScopeKey
+            ? '已检测到本地 DashScope Key。选 Qwen 后自拍将走 qwen3-vl-plus；失败会友好提示并回退 Mock。'
+            : '未检测到 Key时 Qwen 会回退 Mock。在项目根目录 .env 写入 EXPO_PUBLIC_DASHSCOPE_API_KEY 后重启 expo。'}
+        </Text>
       </View>
 
       <View style={styles.spacer} />
@@ -87,5 +126,42 @@ const styles = StyleSheet.create({
   },
   dotActive: { backgroundColor: '#E8A0B0' },
   options: { marginTop: 4 },
-  spacer: { flex: 1, minHeight: 24 },
+  spacer: { flex: 1, minHeight: 16 },
+  engineBlock: {
+    marginTop: 20,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+  },
+  engineTitle: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 10,
+  },
+  engineRow: { flexDirection: 'row', gap: 8 },
+  engineChip: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+  },
+  engineChipOn: {
+    borderColor: colors.primary,
+    backgroundColor: 'rgba(232,160,176,0.12)',
+  },
+  engineLabel: { color: colors.textSecondary, fontWeight: '700', fontSize: 13 },
+  engineLabelOn: { color: colors.primary },
+  engineHint: { color: colors.textMuted, fontSize: 10, marginTop: 2 },
+  engineNote: {
+    color: colors.textMuted,
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 10,
+  },
 });

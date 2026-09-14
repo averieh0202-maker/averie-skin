@@ -107,12 +107,18 @@ export function PaidReportScreen({ navigation }: Props) {
           title={leads.zone_tips.title}
           lead={leads.zone_tips.lead}
         >
-          {result.report_paid.zone_notes.map((z) => (
-            <View key={z.zone} style={styles.zone}>
-              <Text style={styles.zoneTitle}>{z.zone_zh}</Text>
-              <Text style={styles.zoneNote}>{z.note}</Text>
-            </View>
-          ))}
+          {result.report_paid.zone_notes.length === 0 ? (
+            <Text style={styles.bulletMuted}>
+              本次图像暂无明显分区依据，已隐藏空分区。
+            </Text>
+          ) : (
+            result.report_paid.zone_notes.map((z, i) => (
+              <View key={`${z.zone}-${i}`} style={styles.zone}>
+                <Text style={styles.zoneTitle}>{z.zone_zh}</Text>
+                <Text style={styles.zoneNote}>{z.note}</Text>
+              </View>
+            ))
+          )}
         </AccordionSection>
 
         {/* 4. 14天步骤 */}

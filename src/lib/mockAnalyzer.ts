@@ -22,6 +22,7 @@ import {
   pickDimDetail,
   pickDimSideNote,
 } from './copyPack';
+import { buildZoneNotes } from './zoneTips';
 
 /** Simple deterministic hash from string → 0..1 */
 function hashSeed(s: string): number {
@@ -74,16 +75,16 @@ const CONCERN_POOL: Array<{
   {
     id: 'pores',
     label_zh: '毛孔',
-    regions: ['t_zone', 'nose'],
+    regions: ['nose', 'forehead', 'cheeks'],
     notes: [
-      'T区与鼻翼毛孔在光线里更有存在感，和出油、光影常一起出现。',
+      '鼻翼与T区毛孔在光线里更有存在感，和出油、光影常一起出现。',
       '鼻翼两侧细小毛孔纹理更清楚一点，仍属常见观感。',
     ],
   },
   {
     id: 'dullness',
     label_zh: '暗沉',
-    regions: ['cheeks', 'full_face'],
+    regions: ['forehead', 'cheeks', 'periocular'],
     notes: [
       '面中光泽偏弱，亮感有点散，更像表层还渴着。',
       '整体反光略显疲惫，优先把水润做稳再谈光泽。',
@@ -92,7 +93,7 @@ const CONCERN_POOL: Array<{
   {
     id: 'oiliness',
     label_zh: '出油',
-    regions: ['t_zone', 'forehead'],
+    regions: ['forehead', 'nose'],
     notes: [
       '前额与鼻梁有轻微油光，中午前后更容易亮。',
       'T区反光略多于两颊，清洁温和见底即可。',
@@ -101,7 +102,7 @@ const CONCERN_POOL: Array<{
   {
     id: 'dryness_flakes',
     label_zh: '干燥起皮',
-    regions: ['cheeks', 'chin'],
+    regions: ['cheeks', 'chin', 'periocular'],
     notes: [
       '两颊纹理偏干，笑的时候更像轻轻折过的纸。',
       '下巴附近有细微干纹感，保湿宜薄层叠润。',
@@ -110,28 +111,28 @@ const CONCERN_POOL: Array<{
   {
     id: 'pigmentation',
     label_zh: '色沉',
-    regions: ['cheeks', 'perioral'],
+    regions: ['perioral', 'cheeks'],
     notes: [
-      '面颊局部有一点深浅差，不刺眼，防晒更值得坚持。',
       '口周附近轻微色差，美白概念不必急着叠很多。',
+      '面颊局部有一点深浅差，不刺眼，防晒更值得坚持。',
     ],
   },
   {
     id: 'texture',
     label_zh: '粗糙纹理',
-    regions: ['cheeks', 'forehead'],
+    regions: ['forehead', 'cheeks'],
     notes: [
-      '面颊细纹路略粗，近看才发现，常和缺水有关。',
       '前额肤感不够细腻，轻薄保湿往往更友好。',
+      '面颊细纹路略粗，近看才发现，常和缺水有关。',
     ],
   },
   {
     id: 'redness',
     label_zh: '泛红',
-    regions: ['cheeks', 'nose'],
+    regions: ['nose', 'cheeks'],
     notes: [
-      '两颊有一点薄红，像刚吹过风或运动后。',
       '鼻翼周围色调偏红，步骤做少、做温和更合适。',
+      '两颊有一点薄红，像刚吹过风或运动后。',
     ],
   },
   {
@@ -146,23 +147,14 @@ const CONCERN_POOL: Array<{
   {
     id: 'sensitivity_appearance',
     label_zh: '敏感外观',
-    regions: ['cheeks', 'full_face'],
+    regions: ['cheeks', 'periocular', 'nose'],
     notes: [
       '面颊偏敏感的外观，今天更适合少步骤、慢一点。',
-      '整体屏障观感偏脆，经不起太热闹的护理。',
+      '眼周与两颊屏障观感偏脆，经不起太热闹的护理。',
     ],
   },
 ];
 
-const ZONE_ZH: Record<FaceRegion, string> = {
-  forehead: '前额',
-  t_zone: 'T区',
-  cheeks: '两颊',
-  chin: '下巴',
-  nose: '鼻部',
-  perioral: '口周',
-  full_face: '全脸',
-};
 
 const CATEGORY_ZH: Record<ProductCategory, string> = {
   cleanser: '洁面',
@@ -605,20 +597,7 @@ export function analyzeSkin(input: AnalysisInput): AnalysisResult {
 
   const headline = buildHeadline(perception, seed);
 
-  const zoneNotes = concerns.flatMap((c) =>
-    c.regions.slice(0, 1).map((zone) => ({
-      zone,
-      zone_zh: ZONE_ZH[zone],
-      note: c.note,
-    })),
-  );
-
-  const seen = new Set<string>();
-  const uniqueZones = zoneNotes.filter((z) => {
-    if (seen.has(z.zone)) return false;
-    seen.add(z.zone);
-    return true;
-  });
+  const uniqueZones = buildZoneNotes(seed, concerns, perception);
 
   const productCtx: ProductWhyCtx = {
     skinTypeZh: tendencyTag,
