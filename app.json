@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "Averie Skin",
+    "slug": "averie-skin",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0C0C0E"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.averie.skin",
+      "infoPlist": {
+        "NSCameraUsageDescription": "需要相机权限以拍摄自拍进行肤况外观评估。",
+        "NSPhotoLibraryUsageDescription": "需要相册权限以选择自拍进行肤况外观评估。"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0C0C0E",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": ["CAMERA", "READ_MEDIA_IMAGES"],
+      "package": "com.averie.skin"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "需要相册权限以选择自拍进行肤况外观评估。",
+          "cameraPermission": "需要相机权限以拍摄自拍进行肤况外观评估。"
+        }
+      ]
+    ]
+  }
+}
