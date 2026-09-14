@@ -1,4 +1,8 @@
-/** Averie Skin Analysis schema v1.3 (MVP subset) */
+/** Averie Skin Analysis schema v1.4 (MVP subset)
+ * Free 7 dims (exact display names): 光泽、出油、毛孔、纹理、色匀、细纹、泛红
+ * Product card order: 品类 → 名称型号 → 对应关注点 → 理由
+ * Routine order: 清洁 → (精华 optional) → 保湿 → 防晒
+ */
 
 export type Gender = 'female' | 'male' | 'unspecified';
 
@@ -42,6 +46,18 @@ export type ProductCategory =
   | 'treatment'
   | 'other';
 
+/** Optional four-level status words for free dimensions */
+export type DimStatus = '稳定' | '尚可' | '可观察' | '需留意';
+
+export type PerceptionKey =
+  | 'glow'
+  | 'oil'
+  | 'pores'
+  | 'texture'
+  | 'evenness'
+  | 'fine_lines'
+  | 'redness';
+
 export interface AnalysisInput {
   gender: Gender;
   age: number;
@@ -76,16 +92,19 @@ export interface ScoreBreakdown {
   barrier_appearance: number;
 }
 
-/** Free-layer perception dimensions — shown on FreeResult */
+/**
+ * Free-layer perception dimensions — shown on FreeResult.
+ * Display names must be exactly: 光泽、出油、毛孔、纹理、色匀、细纹、泛红
+ */
 export interface PerceptionDimension {
-  key:
-    | 'oil_dry'
-    | 'redness'
-    | 'acne'
-    | 'pores'
-    | 'evenness_glow';
+  key: PerceptionKey;
+  /** Exact UI label — one of the seven fixed names */
   label_zh: string;
   value: number;
+  /** One observation line, e.g. 「本次影像可见…」 */
+  observation: string;
+  /** Optional four-level status word */
+  status?: DimStatus;
 }
 
 export interface ZoneNote {
@@ -104,18 +123,23 @@ export interface RoutineStep {
 
 export interface ProductItem {
   slot: string;
-  /** Category label for UI, e.g. 洁面 / 爽肤水 / 精华 */
+  /** Category label for UI, e.g. 洁面 / 精华 */
   category: ProductCategory;
   category_zh: string;
   product_type: string;
   name: string;
   model: string;
-  /** 2–4 sentences with causal link to this analysis */
+  /** Mapped concern shown as 对应关注点 */
+  mapped_concern: string;
+  /**
+   * Reason covering texture / ingredient role / usage rhythm / boundaries,
+   * tied to THIS analysis dimensions.
+   */
   why: string;
 }
 
 export interface AnalysisResult {
-  schema_version: '1.3';
+  schema_version: '1.4';
   disclaimer: string;
   meta: {
     engine: 'mock';
@@ -131,10 +155,11 @@ export interface AnalysisResult {
   skin_score: SkinScore;
   skin_type: SkinType;
   concerns: Concern[];
-  /** Free result dimension scores (perception, not severity) */
+  /** Free result 7 dimension scores (perception, not severity) */
   perception_scores: PerceptionDimension[];
   score_breakdown_paid: ScoreBreakdown;
   summary_free: {
+    /** One sentence: 优势 + 1–2 个关注点；neutral, no confidence numbers */
     headline: string;
   };
   report_paid: {

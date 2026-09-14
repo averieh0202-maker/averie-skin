@@ -52,7 +52,7 @@ App.tsx
 
 | 路径 | 职责 |
 |------|------|
-| `src/types/analysis.ts` | Schema v1.2 类型 |
+| `src/types/analysis.ts` | Schema v1.4 类型 |
 | `src/lib/mockAnalyzer.ts` | 本地 Mock 引擎（按 gender/age/uri 种子出分） |
 | `src/theme/tiers.ts` | 段位视觉与免责声明 |
 | `src/context/SessionContext.tsx` | 会话状态；`unlock` 仅对本分析一次 |
@@ -92,7 +92,7 @@ export async function analyzeSkin(input: AnalysisInput, market: 'cn' | 'overseas
   const route = market === 'cn'
     ? { primary: 'qwen3-vl-plus', fallback: 'deepseek-flash' }
     : { primary: 'gemini-2.5-flash', fallback: 'gpt-4o-mini' };
-  // 调用后端；校验 JSON 符合 schema_version 1.2
+  // 调用后端；校验 JSON 符合 schema_version 1.4
   // Perfect Corp 不在范围内
 }
 ```

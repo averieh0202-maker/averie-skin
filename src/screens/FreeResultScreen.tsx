@@ -94,7 +94,7 @@ export function FreeResultScreen({ navigation }: Props) {
           </Text>
         </View>
 
-        {/* Skin tendency */}
+        {/* Skin tendency + free header: 优势 + 1–2 关注点 + neutral disclaimer */}
         <View
           style={[
             styles.tendencyCard,
@@ -108,7 +108,7 @@ export function FreeResultScreen({ navigation }: Props) {
           <Text style={styles.headline}>{result.summary_free.headline}</Text>
         </View>
 
-        {/* Dimension perception scores */}
+        {/* 7 perception dimensions — exact names */}
         <View
           style={[
             styles.dimsCard,
@@ -116,7 +116,7 @@ export function FreeResultScreen({ navigation }: Props) {
           ]}
         >
           <Text style={styles.dimsTitle}>分项观感</Text>
-          <Text style={styles.dimsHint}>外观感知分 · 非医疗评估</Text>
+          <Text style={styles.dimsHint}>外观感知 · 基于当前影像</Text>
           {dimensions.map((d) => (
             <DimensionRow key={d.key} dim={d} accent={tier.accent} />
           ))}
@@ -146,7 +146,12 @@ function DimensionRow({
   return (
     <View style={styles.dimRow}>
       <View style={styles.dimHeader}>
-        <Text style={styles.dimLabel}>{dim.label_zh}</Text>
+        <View style={styles.dimLabelWrap}>
+          <Text style={styles.dimLabel}>{dim.label_zh}</Text>
+          {dim.status ? (
+            <Text style={styles.dimStatus}>{dim.status}</Text>
+          ) : null}
+        </View>
         <Text style={[styles.dimValue, { color: accent }]}>{dim.value}</Text>
       </View>
       <View style={styles.dimTrack}>
@@ -160,6 +165,7 @@ function DimensionRow({
           ]}
         />
       </View>
+      <Text style={styles.dimObs}>{dim.observation}</Text>
     </View>
   );
 }
@@ -310,16 +316,26 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.42)',
     marginBottom: 16,
   },
-  dimRow: { marginBottom: 14 },
+  dimRow: { marginBottom: 16 },
   dimHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
     marginBottom: 6,
   },
+  dimLabelWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   dimLabel: {
     fontSize: 13,
     color: 'rgba(255,255,255,0.78)',
+    fontWeight: '500',
+  },
+  dimStatus: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.45)',
     fontWeight: '500',
   },
   dimValue: {
@@ -337,6 +353,12 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 3,
     opacity: 0.9,
+  },
+  dimObs: {
+    marginTop: 6,
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.55)',
+    lineHeight: 17,
   },
   ctaBlock: { width: '100%', marginBottom: 20 },
   ctaHint: {

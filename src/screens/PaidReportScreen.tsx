@@ -43,7 +43,13 @@ export function PaidReportScreen({ navigation }: Props) {
 
         <SectionCard title="分项观感">
           {perception.map((p) => (
-            <ScoreBar key={p.key} label={p.label_zh} value={p.value} />
+            <View key={p.key} style={styles.percBlock}>
+              <ScoreBar label={p.label_zh} value={p.value} />
+              <Text style={styles.percObs}>{p.observation}</Text>
+              {p.status ? (
+                <Text style={styles.percStatus}>{p.status}</Text>
+              ) : null}
+            </View>
           ))}
         </SectionCard>
 
@@ -112,6 +118,7 @@ export function PaidReportScreen({ navigation }: Props) {
           </SectionCard>
         )}
 
+        {/* Product cards: 品类 → 名称型号 → 对应关注点 → 理由 */}
         <SectionCard title="产品参考">
           <Text style={styles.noLinkNote}>
             仅展示品类、名称与型号及推荐理由，无购买链接、无广告按钮。
@@ -123,6 +130,9 @@ export function PaidReportScreen({ navigation }: Props) {
               </View>
               <Text style={styles.productName}>
                 {p.name} · {p.model}
+              </Text>
+              <Text style={styles.productMapped}>
+                对应关注点 · {p.mapped_concern}
               </Text>
               <Text style={styles.productWhy}>{p.why}</Text>
             </View>
@@ -184,6 +194,19 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: 22,
   },
+  percBlock: { marginBottom: 12 },
+  percObs: {
+    color: colors.textMuted,
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 2,
+    marginBottom: 2,
+  },
+  percStatus: {
+    color: colors.textMuted,
+    fontSize: 11,
+    marginBottom: 4,
+  },
   concern: { marginBottom: 12 },
   concernTitle: { color: colors.text, fontWeight: '700', fontSize: 15 },
   concernNote: { color: colors.textSecondary, fontSize: 13, marginTop: 2, lineHeight: 19 },
@@ -241,6 +264,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   productName: { color: colors.text, fontWeight: '700', fontSize: 15, marginBottom: 6 },
+  productMapped: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
   productWhy: {
     color: colors.textSecondary,
     fontSize: 13,
@@ -249,9 +278,9 @@ const styles = StyleSheet.create({
   barRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 4,
   },
-  barLabel: { width: 96, color: colors.textSecondary, fontSize: 12 },
+  barLabel: { width: 72, color: colors.textSecondary, fontSize: 12 },
   barTrack: {
     flex: 1,
     height: 8,
