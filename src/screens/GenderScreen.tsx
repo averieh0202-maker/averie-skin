@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { useSession } from '../context/SessionContext';
@@ -10,9 +10,9 @@ import {
   Screen,
   Subtitle,
   Title,
+  DisclaimerFooter,
 } from '../components/ui';
 import { DISCLAIMER } from '../theme/tiers';
-import { DisclaimerFooter } from '../components/ui';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Gender'>;
 
@@ -28,6 +28,7 @@ export function GenderScreen({ navigation }: Props) {
 
   return (
     <Screen>
+      <Text style={styles.brand}>Averie Skin</Text>
       <View style={styles.progress}>
         <View style={[styles.dot, styles.dotActive]} />
         <View style={styles.dot} />
@@ -64,11 +65,19 @@ export function GenderScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  brand: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.4)',
+    letterSpacing: 2.5,
+    textTransform: 'uppercase',
+    marginBottom: 20,
+    marginTop: 4,
+  },
   progress: {
     flexDirection: 'row',
     gap: 6,
-    marginBottom: 24,
-    marginTop: 8,
+    marginBottom: 28,
   },
   dot: {
     width: 28,
@@ -78,5 +87,5 @@ const styles = StyleSheet.create({
   },
   dotActive: { backgroundColor: '#E8A0B0' },
   options: { marginTop: 4 },
-  spacer: { flex: 1 },
+  spacer: { flex: 1, minHeight: 24 },
 });

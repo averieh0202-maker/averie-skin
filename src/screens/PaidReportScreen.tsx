@@ -26,6 +26,7 @@ export function PaidReportScreen({ navigation }: Props) {
 
   const tier = tierFromScore(result.skin_score.value);
   const bd = result.score_breakdown_paid;
+  const perception = result.perception_scores;
 
   return (
     <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
@@ -40,7 +41,13 @@ export function PaidReportScreen({ navigation }: Props) {
         </Text>
         <Text style={styles.summary}>{result.report_paid.full_summary}</Text>
 
-        <SectionCard title="分项评分">
+        <SectionCard title="分项观感">
+          {perception.map((p) => (
+            <ScoreBar key={p.key} label={p.label_zh} value={p.value} />
+          ))}
+        </SectionCard>
+
+        <SectionCard title="综合分项">
           <ScoreBar label="光泽观感" value={bd.glow} />
           <ScoreBar label="匀净度" value={bd.evenness} />
           <ScoreBar label="澄净度" value={bd.clarity} />
@@ -105,12 +112,15 @@ export function PaidReportScreen({ navigation }: Props) {
           </SectionCard>
         )}
 
-        <SectionCard title="产品参考（名称 + 型号）">
+        <SectionCard title="产品参考">
           <Text style={styles.noLinkNote}>
-            仅展示名称与型号，无购买链接、无广告按钮。
+            仅展示品类、名称与型号及推荐理由，无购买链接、无广告按钮。
           </Text>
           {result.products_paid.items.map((p) => (
             <View key={p.slot} style={styles.product}>
+              <View style={styles.productCatWrap}>
+                <Text style={styles.productCat}>{p.category_zh}</Text>
+              </View>
               <Text style={styles.productName}>
                 {p.name} · {p.model}
               </Text>
@@ -119,7 +129,6 @@ export function PaidReportScreen({ navigation }: Props) {
           ))}
         </SectionCard>
 
-        {/* No retest entry — starting over requires paying again */}
         <View style={styles.endBlock}>
           <Text style={styles.endNote}>
             本次报告已解锁。如需再次分析，请重新开始流程（将再次付费）。
@@ -142,7 +151,9 @@ export function PaidReportScreen({ navigation }: Props) {
 function ScoreBar({ label, value }: { label: string; value: number }) {
   return (
     <View style={styles.barRow}>
-      <Text style={styles.barLabel}>{label}</Text>
+      <Text style={styles.barLabel} numberOfLines={1}>
+        {label}
+      </Text>
       <View style={styles.barTrack}>
         <View style={[styles.barFill, { width: `${value}%` }]} />
       </View>
@@ -153,33 +164,33 @@ function ScoreBar({ label, value }: { label: string; value: number }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
-  scroll: { padding: 24, paddingTop: 56, paddingBottom: 48 },
+  scroll: { padding: 24, paddingTop: 48, paddingBottom: 48 },
   brand: {
     fontSize: 12,
     color: colors.textMuted,
     letterSpacing: 1.5,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   bigScore: {
-    fontSize: 56,
-    fontWeight: '800',
+    fontSize: 64,
+    fontWeight: '200',
     color: colors.text,
-    letterSpacing: -2,
+    letterSpacing: -3,
   },
-  tier: { fontSize: 16, fontWeight: '700', marginBottom: 12 },
+  tier: { fontSize: 16, fontWeight: '700', marginBottom: 14, marginTop: 2 },
   summary: {
     color: colors.textSecondary,
     fontSize: 14,
-    lineHeight: 21,
-    marginBottom: 20,
+    lineHeight: 22,
+    marginBottom: 22,
   },
   concern: { marginBottom: 12 },
   concernTitle: { color: colors.text, fontWeight: '700', fontSize: 15 },
-  concernNote: { color: colors.textSecondary, fontSize: 13, marginTop: 2 },
+  concernNote: { color: colors.textSecondary, fontSize: 13, marginTop: 2, lineHeight: 19 },
   zone: { marginBottom: 10 },
   zoneTitle: { color: colors.primary, fontWeight: '700', fontSize: 13 },
-  zoneNote: { color: colors.textSecondary, fontSize: 13, marginTop: 2 },
-  step: { flexDirection: 'row', marginBottom: 12, alignItems: 'flex-start' },
+  zoneNote: { color: colors.textSecondary, fontSize: 13, marginTop: 2, lineHeight: 19 },
+  step: { flexDirection: 'row', marginBottom: 14, alignItems: 'flex-start' },
   stepNum: {
     width: 26,
     height: 26,
@@ -195,28 +206,52 @@ const styles = StyleSheet.create({
   },
   stepBody: { flex: 1 },
   stepAction: { color: colors.text, fontWeight: '700', fontSize: 14 },
-  stepPurpose: { color: colors.textSecondary, fontSize: 12, marginTop: 2 },
+  stepPurpose: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    marginTop: 4,
+    lineHeight: 18,
+  },
   bullet: { color: colors.textSecondary, fontSize: 13, marginBottom: 6 },
   bulletMuted: { color: colors.textMuted, fontSize: 13, marginBottom: 6 },
   noLinkNote: {
     color: colors.textMuted,
     fontSize: 12,
-    marginBottom: 12,
+    marginBottom: 14,
+    lineHeight: 17,
   },
   product: {
-    marginBottom: 14,
-    paddingBottom: 12,
+    marginBottom: 18,
+    paddingBottom: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
-  productName: { color: colors.text, fontWeight: '700', fontSize: 14 },
-  productWhy: { color: colors.textSecondary, fontSize: 12, marginTop: 3 },
+  productCatWrap: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(232,160,176,0.14)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  productCat: {
+    color: colors.primary,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  productName: { color: colors.text, fontWeight: '700', fontSize: 15, marginBottom: 6 },
+  productWhy: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 20,
+  },
   barRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
   },
-  barLabel: { width: 72, color: colors.textSecondary, fontSize: 12 },
+  barLabel: { width: 96, color: colors.textSecondary, fontSize: 12 },
   barTrack: {
     flex: 1,
     height: 8,

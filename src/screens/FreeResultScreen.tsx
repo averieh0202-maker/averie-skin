@@ -13,6 +13,7 @@ import { useSession } from '../context/SessionContext';
 import { PrimaryButton, SecondaryButton } from '../components/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, DISCLAIMER, tierFromScore } from '../theme/tiers';
+import { PerceptionDimension } from '../types/analysis';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'FreeResult'>;
 
@@ -35,7 +36,7 @@ export function FreeResultScreen({ navigation }: Props) {
 
   const score = result.skin_score.value;
   const tier = tierFromScore(score);
-  const confPct = Math.round(result.meta.overall_confidence * 100);
+  const dimensions = result.perception_scores;
 
   return (
     <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
@@ -45,7 +46,6 @@ export function FreeResultScreen({ navigation }: Props) {
         end={{ x: 0.9, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      {/* Soft glow orb for shareability */}
       <View
         style={[
           styles.glow,
@@ -55,6 +55,7 @@ export function FreeResultScreen({ navigation }: Props) {
           },
         ]}
       />
+      <View style={[styles.glowSoft, { backgroundColor: tier.scoreColor }]} />
 
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -62,13 +63,17 @@ export function FreeResultScreen({ navigation }: Props) {
       >
         <Text style={styles.brand}>Averie Skin</Text>
 
-        {/* Huge score — primary free UI */}
+        {/* Hero: large score + tier */}
         <View style={styles.scoreBlock}>
+          <Text style={[styles.scoreUnit, { color: tier.badgeText }]}>肤质评分</Text>
           <Text style={[styles.score, { color: tier.scoreColor }]}>{score}</Text>
-          <Text style={[styles.scoreLabel, { color: tier.badgeText }]}>肤质评分</Text>
+          <View style={styles.scoreUnderline}>
+            <View
+              style={[styles.scoreUnderlineFill, { backgroundColor: tier.accent }]}
+            />
+          </View>
         </View>
 
-        {/* Tier badge — distinct per tier */}
         <View
           style={[
             styles.badge,
@@ -78,6 +83,7 @@ export function FreeResultScreen({ navigation }: Props) {
             },
             tier.id === 'porcelain' && styles.badgePorcelain,
             tier.id === 'glow' && styles.badgeGlow,
+            tier.id === 'steady' && styles.badgeSteady,
           ]}
         >
           <Text style={[styles.badgeText, { color: tier.badgeText }]}>
@@ -102,6 +108,20 @@ export function FreeResultScreen({ navigation }: Props) {
           <Text style={styles.headline}>{result.summary_free.headline}</Text>
         </View>
 
+        {/* Dimension perception scores */}
+        <View
+          style={[
+            styles.dimsCard,
+            { backgroundColor: tier.cardBg, borderColor: tier.cardBorder },
+          ]}
+        >
+          <Text style={styles.dimsTitle}>分项观感</Text>
+          <Text style={styles.dimsHint}>外观感知分 · 非医疗评估</Text>
+          {dimensions.map((d) => (
+            <DimensionRow key={d.key} dim={d} accent={tier.accent} />
+          ))}
+        </View>
+
         <View style={styles.ctaBlock}>
           <PrimaryButton
             label="解锁完整报告 · ¥9.9"
@@ -110,13 +130,37 @@ export function FreeResultScreen({ navigation }: Props) {
           <Text style={styles.ctaHint}>单次解锁 · 无订阅 · 无复测入口</Text>
         </View>
 
-        {/* Confidence only as small footer — do NOT lead with severity */}
-        <Text style={styles.confidence}>
-          基于当前照片的外观判断，把握约 {confPct}% · 仅供参考
-        </Text>
         <Text style={styles.disclaimer}>{DISCLAIMER}</Text>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function DimensionRow({
+  dim,
+  accent,
+}: {
+  dim: PerceptionDimension;
+  accent: string;
+}) {
+  return (
+    <View style={styles.dimRow}>
+      <View style={styles.dimHeader}>
+        <Text style={styles.dimLabel}>{dim.label_zh}</Text>
+        <Text style={[styles.dimValue, { color: accent }]}>{dim.value}</Text>
+      </View>
+      <View style={styles.dimTrack}>
+        <View
+          style={[
+            styles.dimFill,
+            {
+              width: `${Math.max(4, Math.min(100, dim.value))}%`,
+              backgroundColor: accent,
+            },
+          ]}
+        />
+      </View>
+    </View>
   );
 }
 
@@ -124,110 +168,186 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   glow: {
     position: 'absolute',
-    width: width * 0.9,
-    height: width * 0.9,
+    width: width * 0.95,
+    height: width * 0.95,
     borderRadius: width,
-    top: -width * 0.15,
+    top: -width * 0.2,
     alignSelf: 'center',
-    left: width * 0.05,
+    left: width * 0.025,
+  },
+  glowSoft: {
+    position: 'absolute',
+    width: width * 0.55,
+    height: width * 0.55,
+    borderRadius: width,
+    top: width * 0.08,
+    alignSelf: 'center',
+    left: width * 0.225,
+    opacity: 0.08,
   },
   scroll: {
     paddingHorizontal: 24,
-    paddingTop: 56,
-    paddingBottom: 40,
+    paddingTop: 40,
+    paddingBottom: 44,
     alignItems: 'center',
   },
   brand: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.55)',
-    letterSpacing: 2,
+    color: 'rgba(255,255,255,0.5)',
+    letterSpacing: 3,
     textTransform: 'uppercase',
-    marginBottom: 28,
+    marginBottom: 32,
   },
-  scoreBlock: { alignItems: 'center', marginBottom: 12 },
-  score: {
-    fontSize: 108,
-    fontWeight: '800',
-    letterSpacing: -4,
-    lineHeight: 116,
-  },
-  scoreLabel: {
-    fontSize: 14,
+  scoreBlock: { alignItems: 'center', marginBottom: 18 },
+  scoreUnit: {
+    fontSize: 12,
     fontWeight: '600',
-    opacity: 0.75,
-    marginTop: -4,
+    letterSpacing: 1.5,
+    opacity: 0.7,
+    marginBottom: 4,
+  },
+  score: {
+    fontSize: 120,
+    fontWeight: '200',
+    letterSpacing: -6,
+    lineHeight: 128,
+  },
+  scoreUnderline: {
+    width: 56,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    marginTop: 4,
+    overflow: 'hidden',
+  },
+  scoreUnderlineFill: {
+    width: '70%',
+    height: '100%',
+    borderRadius: 2,
+    alignSelf: 'center',
   },
   badge: {
-    paddingHorizontal: 22,
-    paddingVertical: 12,
+    paddingHorizontal: 26,
+    paddingVertical: 14,
     borderRadius: 999,
     borderWidth: 1.5,
     alignItems: 'center',
     marginBottom: 28,
-    minWidth: 140,
+    minWidth: 152,
   },
   badgePorcelain: {
     borderWidth: 2,
     shadowColor: '#FFE8C8',
-    shadowOpacity: 0.45,
-    shadowRadius: 12,
+    shadowOpacity: 0.5,
+    shadowRadius: 14,
     shadowOffset: { width: 0, height: 0 },
   },
   badgeGlow: {
     shadowColor: '#6EC8E8',
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
+    shadowOpacity: 0.45,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  badgeSteady: {
+    shadowColor: '#FFFFFF',
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
     shadowOffset: { width: 0, height: 0 },
   },
   badgeText: {
-    fontSize: 20,
-    fontWeight: '800',
-    letterSpacing: 1,
+    fontSize: 22,
+    fontWeight: '700',
+    letterSpacing: 2,
   },
   badgeSub: {
     fontSize: 11,
-    opacity: 0.7,
-    marginTop: 2,
+    opacity: 0.65,
+    marginTop: 3,
+    letterSpacing: 0.5,
   },
   tendencyCard: {
     width: '100%',
-    borderRadius: 20,
+    borderRadius: 22,
     borderWidth: 1,
-    padding: 20,
-    marginBottom: 28,
+    paddingVertical: 20,
+    paddingHorizontal: 22,
+    marginBottom: 14,
   },
   tendencyLabel: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.55)',
-    marginBottom: 4,
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.5)',
+    letterSpacing: 1,
+    marginBottom: 6,
   },
   tendencyValue: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '700',
-    marginBottom: 8,
+    letterSpacing: -0.3,
+    marginBottom: 10,
   },
   headline: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.75)',
-    lineHeight: 20,
+    color: 'rgba(255,255,255,0.72)',
+    lineHeight: 21,
+  },
+  dimsCard: {
+    width: '100%',
+    borderRadius: 22,
+    borderWidth: 1,
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    marginBottom: 28,
+  },
+  dimsTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.92)',
+    marginBottom: 2,
+  },
+  dimsHint: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.42)',
+    marginBottom: 16,
+  },
+  dimRow: { marginBottom: 14 },
+  dimHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 6,
+  },
+  dimLabel: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.78)',
+    fontWeight: '500',
+  },
+  dimValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
+  dimTrack: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    overflow: 'hidden',
+  },
+  dimFill: {
+    height: '100%',
+    borderRadius: 3,
+    opacity: 0.9,
   },
   ctaBlock: { width: '100%', marginBottom: 20 },
   ctaHint: {
     textAlign: 'center',
-    color: 'rgba(255,255,255,0.45)',
+    color: 'rgba(255,255,255,0.42)',
     fontSize: 12,
-    marginTop: 10,
-  },
-  confidence: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.4)',
-    textAlign: 'center',
-    marginBottom: 8,
+    marginTop: 12,
   },
   disclaimer: {
     fontSize: 10,
-    color: 'rgba(255,255,255,0.3)',
+    color: 'rgba(255,255,255,0.32)',
     textAlign: 'center',
     lineHeight: 15,
     paddingHorizontal: 8,

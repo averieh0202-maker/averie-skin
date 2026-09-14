@@ -64,7 +64,6 @@ export function SelfieScreen({ navigation }: Props) {
     if (!uri) return;
     setBusy(true);
     setImageUri(uri);
-    // Brief delay so UI feels like analysis is running
     setTimeout(() => {
       runAnalysis();
       setBusy(false);
@@ -86,11 +85,16 @@ export function SelfieScreen({ navigation }: Props) {
 
       <View style={styles.previewWrap}>
         {uri ? (
-          <Image source={{ uri }} style={styles.preview} />
+          <View style={styles.previewFrame}>
+            <Image source={{ uri }} style={styles.preview} />
+          </View>
         ) : (
           <View style={styles.placeholder}>
-            <Text style={styles.placeholderIcon}>◎</Text>
+            <View style={styles.placeholderRing}>
+              <Text style={styles.placeholderIcon}>◎</Text>
+            </View>
             <Text style={styles.placeholderText}>尚未选择照片</Text>
+            <Text style={styles.placeholderHint}>正面 · 自然光 · 无滤镜</Text>
           </View>
         )}
       </View>
@@ -120,7 +124,7 @@ const styles = StyleSheet.create({
   progress: {
     flexDirection: 'row',
     gap: 6,
-    marginBottom: 24,
+    marginBottom: 28,
     marginTop: 8,
   },
   dot: {
@@ -133,32 +137,54 @@ const styles = StyleSheet.create({
   dotDone: { backgroundColor: 'rgba(232,160,176,0.45)' },
   previewWrap: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 18,
+  },
+  previewFrame: {
+    borderRadius: 28,
+    padding: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(232,160,176,0.35)',
+    backgroundColor: 'rgba(232,160,176,0.06)',
   },
   preview: {
-    width: 220,
-    height: 280,
+    width: 216,
+    height: 276,
     borderRadius: 24,
     backgroundColor: colors.surface,
   },
   placeholder: {
-    width: 220,
-    height: 280,
-    borderRadius: 24,
+    width: 222,
+    height: 282,
+    borderRadius: 28,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+  placeholderRing: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 1,
+    borderColor: 'rgba(232,160,176,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   placeholderIcon: {
-    fontSize: 36,
-    color: colors.textMuted,
-    marginBottom: 8,
+    fontSize: 28,
+    color: colors.primary,
   },
-  placeholderText: { color: colors.textMuted, fontSize: 13 },
+  placeholderText: { color: colors.textSecondary, fontSize: 14, fontWeight: '600' },
+  placeholderHint: {
+    color: colors.textMuted,
+    fontSize: 11,
+    marginTop: 6,
+    letterSpacing: 0.5,
+  },
   row: { flexDirection: 'row', gap: 10 },
   half: { flex: 1 },
-  spacer: { flex: 1, minHeight: 16 },
+  spacer: { flex: 1, minHeight: 20 },
 });

@@ -75,7 +75,7 @@ export function AgeScreen({ navigation }: Props) {
               autoFocus
               returnKeyType="done"
               blurOnSubmit
-              onSubmitEditing={goNext}
+              onSubmitEditing={() => Keyboard.dismiss()}
               inputAccessoryViewID={
                 Platform.OS === 'ios' ? AGE_ACCESSORY_ID : undefined
               }
@@ -97,17 +97,13 @@ export function AgeScreen({ navigation }: Props) {
         <InputAccessoryView nativeID={AGE_ACCESSORY_ID}>
           <View style={styles.accessory}>
             <Pressable
-              onPress={goNext}
+              onPress={() => Keyboard.dismiss()}
               style={({ pressed }) => [
                 styles.accessoryBtn,
-                !valid && styles.accessoryBtnDisabled,
-                pressed && valid && styles.accessoryBtnPressed,
+                pressed && styles.accessoryBtnPressed,
               ]}
-              disabled={!valid}
             >
-              <Text style={styles.accessoryBtnText}>
-                {valid ? '下一步' : '完成'}
-              </Text>
+              <Text style={styles.accessoryBtnText}>完成</Text>
             </Pressable>
           </View>
         </InputAccessoryView>
@@ -125,7 +121,7 @@ const styles = StyleSheet.create({
   progress: {
     flexDirection: 'row',
     gap: 6,
-    marginBottom: 24,
+    marginBottom: 28,
     marginTop: 8,
   },
   dot: {
@@ -137,7 +133,7 @@ const styles = StyleSheet.create({
   dotActive: { backgroundColor: '#E8A0B0' },
   dotDone: { backgroundColor: 'rgba(232,160,176,0.45)' },
   hint: { color: colors.textMuted, fontSize: 12, marginTop: 10 },
-  spacer: { flexGrow: 1, minHeight: 24 },
+  spacer: { flexGrow: 1, minHeight: 28 },
   accessory: {
     backgroundColor: '#1A1A1E',
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -150,15 +146,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: '#E8A0B0',
-  },
-  accessoryBtnDisabled: {
-    backgroundColor: 'rgba(232,160,176,0.35)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
   },
   accessoryBtnPressed: { opacity: 0.85 },
   accessoryBtnText: {
-    color: '#0C0C0E',
-    fontWeight: '700',
+    color: '#F4F4F6',
+    fontWeight: '600',
     fontSize: 15,
   },
 });

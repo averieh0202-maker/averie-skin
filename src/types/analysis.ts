@@ -1,4 +1,4 @@
-/** Averie Skin Analysis schema v1.2 (MVP subset) */
+/** Averie Skin Analysis schema v1.3 (MVP subset) */
 
 export type Gender = 'female' | 'male' | 'unspecified';
 
@@ -33,6 +33,15 @@ export type FaceRegion =
   | 'perioral'
   | 'full_face';
 
+export type ProductCategory =
+  | 'cleanser'
+  | 'toner'
+  | 'serum'
+  | 'moisturizer'
+  | 'sunscreen'
+  | 'treatment'
+  | 'other';
+
 export interface AnalysisInput {
   gender: Gender;
   age: number;
@@ -59,11 +68,24 @@ export interface Concern {
   note: string;
 }
 
+/** Paid report numeric breakdown (legacy fields kept) */
 export interface ScoreBreakdown {
   glow: number;
   evenness: number;
   clarity: number;
   barrier_appearance: number;
+}
+
+/** Free-layer perception dimensions — shown on FreeResult */
+export interface PerceptionDimension {
+  key:
+    | 'oil_dry'
+    | 'redness'
+    | 'acne'
+    | 'pores'
+    | 'evenness_glow';
+  label_zh: string;
+  value: number;
 }
 
 export interface ZoneNote {
@@ -75,20 +97,25 @@ export interface ZoneNote {
 export interface RoutineStep {
   step: number;
   action: string;
+  /** What this step solves for THIS analysis */
   purpose: string;
   product_type: string;
 }
 
 export interface ProductItem {
   slot: string;
+  /** Category label for UI, e.g. 洁面 / 爽肤水 / 精华 */
+  category: ProductCategory;
+  category_zh: string;
   product_type: string;
   name: string;
   model: string;
+  /** 2–4 sentences with causal link to this analysis */
   why: string;
 }
 
 export interface AnalysisResult {
-  schema_version: '1.2';
+  schema_version: '1.3';
   disclaimer: string;
   meta: {
     engine: 'mock';
@@ -98,11 +125,14 @@ export interface AnalysisResult {
     age_input: number;
     gender_input: Gender;
     image_quality_score: number;
+    /** Kept for schema; never display as percentage in UI */
     overall_confidence: number;
   };
   skin_score: SkinScore;
   skin_type: SkinType;
   concerns: Concern[];
+  /** Free result dimension scores (perception, not severity) */
+  perception_scores: PerceptionDimension[];
   score_breakdown_paid: ScoreBreakdown;
   summary_free: {
     headline: string;
