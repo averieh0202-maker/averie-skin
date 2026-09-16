@@ -11,7 +11,7 @@ import {
 } from '../types/analysis';
 import { analyzeSkin as mockAnalyze } from './mockAnalyzer';
 import { analyzeWithQwen, QwenAnalyzeError } from './qwenAnalyzer';
-import { getAnalyzerMarket, resolveEngine } from './config';
+import { getAnalyzerMarket, hasDashScopeKey, resolveEngine } from './config';
 
 export type AnalyzeOutcome = {
   result: AnalysisResult;
@@ -30,6 +30,24 @@ export async function analyzeSkinRouted(
 ): Promise<AnalyzeOutcome> {
   const engine = resolveEngine(preferred);
   const market = getAnalyzerMarket();
+
+  // User explicitly chose Qwen but no key / cannot run → Mock + loud notice
+  if (preferred === 'qwen' && engine === 'mock') {
+    const result = mockAnalyze(input);
+    const reason = !hasDashScopeKey()
+      ? '未检测到本地 DashScope Key（请确认 .env 已写入 EXPO_PUBLIC_DASHSCOPE_API_KEY 并重启 npx expo start）'
+      : market !== 'cn'
+        ? '当前 market 非 cn，Qwen 路由未启用'
+        : '无法启动 Qwen，已使用 Mock';
+    result.meta.fallback_reason = reason;
+    result.meta.engine = 'mock';
+    result.meta.model_id = 'mock-analyzer-v1.4';
+    return {
+      result,
+      usedEngine: 'mock',
+      notice: `${reason}。已为你切换到 Mock 演示结果。`,
+    };
+  }
 
   if (engine === 'qwen' && market === 'cn') {
     try {

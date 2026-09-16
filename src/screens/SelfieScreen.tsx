@@ -67,9 +67,16 @@ export function SelfieScreen({ navigation }: Props) {
     try {
       const { notice } = await runAnalysis({ imageUri: uri });
       if (notice) {
-        Alert.alert('分析提示', notice);
+        // Don't navigate away until user acknowledges fallback/warning
+        Alert.alert('分析提示', notice, [
+          {
+            text: '知道了',
+            onPress: () => navigation.replace('FreeResult'),
+          },
+        ]);
+      } else {
+        navigation.replace('FreeResult');
       }
-      navigation.replace('FreeResult');
     } catch {
       Alert.alert('分析失败', '请稍后重试，或在首页改回 Mock 引擎。');
     } finally {

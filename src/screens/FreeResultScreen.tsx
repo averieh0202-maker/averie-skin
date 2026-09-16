@@ -68,6 +68,29 @@ export function FreeResultScreen({ navigation }: Props) {
       >
         <Text style={styles.brand}>Averie Skin</Text>
 
+        {/* Engine proof — Qwen vs Mock (self-evident for Averie) */}
+        <View style={styles.engineChip}>
+          <Text style={styles.engineChipTitle}>
+            本次引擎：{result.meta.engine === 'qwen' ? 'Qwen' : 'Mock'}
+          </Text>
+          <Text style={styles.engineChipMeta}>
+            model：{result.meta.model_id || '—'}
+          </Text>
+          {result.meta.fallback_reason ? (
+            <Text style={styles.engineChipFallback}>
+              fallback：{result.meta.fallback_reason}
+            </Text>
+          ) : null}
+        </View>
+
+        {result.meta.fallback_reason ? (
+          <View style={styles.fallbackBanner}>
+            <Text style={styles.fallbackBannerText}>
+              智能分析未成功，已回退 Mock 演示。原因：{result.meta.fallback_reason}
+            </Text>
+          </View>
+        ) : null}
+
         {/* Hero: large score + tier */}
         <View style={styles.scoreBlock}>
           <Text style={[styles.scoreUnit, { color: tier.badgeText }]}>肤质评分</Text>
@@ -223,6 +246,49 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginBottom: 32,
   },
+  engineChip: {
+    alignSelf: 'stretch',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.22)',
+    backgroundColor: 'rgba(0,0,0,0.28)',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 14,
+  },
+  engineChipTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.92)',
+    letterSpacing: 0.3,
+  },
+  engineChipMeta: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.55)',
+    marginTop: 4,
+  },
+  engineChipFallback: {
+    fontSize: 11,
+    color: '#FFB4A8',
+    marginTop: 4,
+    lineHeight: 16,
+  },
+  fallbackBanner: {
+    alignSelf: 'stretch',
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 120, 90, 0.22)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 160, 120, 0.45)',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+  },
+  fallbackBannerText: {
+    fontSize: 12,
+    color: 'rgba(255,230,220,0.95)',
+    lineHeight: 18,
+  },
+
   scoreBlock: { alignItems: 'center', marginBottom: 18 },
   scoreUnit: {
     fontSize: 12,
