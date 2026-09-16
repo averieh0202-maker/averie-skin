@@ -8,7 +8,7 @@ import {
   SessionState,
 } from '../types/analysis';
 import { analyzeSkinRouted, mockAnalyze } from '../lib/analyze';
-import { getEnvDefaultEngine, hasDashScopeKey } from '../lib/config';
+import { getEnvDefaultEngine, isAnalyzeConfigured } from '../lib/config';
 
 interface SessionContextValue extends SessionState {
   setPreferences: (p: CarePreferences) => void;
@@ -22,7 +22,8 @@ interface SessionContextValue extends SessionState {
   unlock: () => void;
   /** Full reset — starting over means paying again next time */
   resetSession: () => void;
-  hasDashScopeKey: boolean;
+  /** True when analyze API URL or local DashScope key is configured. */
+  hasAnalyzeService: boolean;
 }
 
 const initial: SessionState = {
@@ -118,7 +119,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       runAnalysis,
       unlock,
       resetSession,
-      hasDashScopeKey: hasDashScopeKey(),
+      hasAnalyzeService: isAnalyzeConfigured(),
     }),
     [
       state,

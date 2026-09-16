@@ -16,7 +16,7 @@ module.exports = ({ config }) => ({
   ...config,
   extra: {
     ...(appJson.expo.extra || {}),
-    /** '1' = force Mock. '0' = prefer Qwen when key present. */
+    /** '1' = force Mock. '0' = prefer Qwen when API URL or key present. */
     useMock: flag(process.env.EXPO_PUBLIC_USE_MOCK, '1'),
     /** 'cn' | 'overseas' */
     analyzerMarket: process.env.EXPO_PUBLIC_ANALYZER_MARKET || 'cn',
@@ -25,6 +25,11 @@ module.exports = ({ config }) => ({
      * Prefer EXPO_PUBLIC_DASHSCOPE_API_KEY for Expo Go client-direct testing ONLY.
      * Also accepts DASHSCOPE_API_KEY. Never commit real keys. Production → backend proxy.
      */
+    /**
+     * Cloudflare Worker analyze API base URL (no trailing slash).
+     * Public gh-pages builds set EXPO_PUBLIC_ANALYZE_API_URL; leave empty for local mock-only.
+     */
+    analyzeApiUrl: process.env.EXPO_PUBLIC_ANALYZE_API_URL || '',
     dashscopeApiKey:
       process.env.EXPO_PUBLIC_DASHSCOPE_API_KEY ||
       process.env.DASHSCOPE_API_KEY ||

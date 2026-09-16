@@ -47,3 +47,8 @@ yarn-error.*
 
 .test-build/
 web-build/
+
+# Cloudflare Worker local
+api/node_modules/
+api/.dev.vars
+api/.wrangler/

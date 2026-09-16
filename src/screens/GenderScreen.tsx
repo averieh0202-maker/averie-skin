@@ -27,7 +27,7 @@ const OPTIONS: Array<{ value: Gender; label: string; emoji: string }> = [
 const ENGINE_OPTS: Array<{ value: AnalyzerEngine; label: string; hint: string }> = [
   { value: 'mock', label: 'Mock', hint: '本地演示' },
   { value: 'qwen', label: 'Qwen', hint: '百炼视觉' },
-  { value: 'auto', label: 'Auto', hint: '有 Key 用 Qwen' },
+  { value: 'auto', label: 'Auto', hint: '有服务用 Qwen' },
 ];
 
 export function GenderScreen({ navigation }: Props) {
@@ -37,7 +37,7 @@ export function GenderScreen({ navigation }: Props) {
     setGender,
     analyzerEngine,
     setAnalyzerEngine,
-    hasDashScopeKey,
+    hasAnalyzeService,
   } = useSession();
   const [selected, setSelected] = useState<Gender | null>(gender);
 
@@ -90,9 +90,9 @@ export function GenderScreen({ navigation }: Props) {
             })}
           </View>
           <Text style={styles.engineNote}>
-            {hasDashScopeKey
-              ? '已检测到本地 DashScope Key。选 Qwen 后自拍将走 qwen3-vl-plus；未通过检查时会提示重试，不会改用示例冒充。'
-              : '真实分析尚未配置，可以先查看示例报告。开发时在本地配置 Key 后重启。'}
+            {hasAnalyzeService
+              ? '已接通分析服务。选 Qwen/Auto 后自拍将走 qwen3-vl-plus；未通过检查时会提示重试，不会改用示例冒充。'
+              : '真实分析尚未配置，可以先查看示例报告。配置分析 API 或本地 Key 后重启。'}
           </Text>
         </AccordionSection>
 

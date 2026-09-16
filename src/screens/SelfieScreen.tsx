@@ -80,7 +80,7 @@ export function SelfieScreen({ navigation }: Props) {
     analyzerEngine === 'qwen'
       ? '当前：Qwen（百炼 qwen3-vl-plus）'
       : analyzerEngine === 'auto'
-        ? '当前：Auto（有 Key 走 Qwen）'
+        ? '当前：Auto（有服务走 Qwen）'
         : '当前：Mock 演示';
 
   return (

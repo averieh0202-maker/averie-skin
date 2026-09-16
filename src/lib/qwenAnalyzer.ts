@@ -2,12 +2,12 @@
  * DashScope / 百炼 vision call — model qwen3-vl-plus.
  * Keys from app.config extra only; never hardcode secrets.
  */
-import * as FileSystem from 'expo-file-system/legacy';
 import { AnalysisInput, AnalysisResult, Gender } from '../types/analysis';
 import { DASHSCOPE_COMPAT_BASE, QWEN_VL_MODEL, getDashScopeApiKey } from './config';
 import { QWEN_SYSTEM_PROMPT, buildQwenUserPrompt } from './llmSchema';
 import { mapLlmPayloadToResult, parseLlmJson } from './mapLlmToResult';
 import { ReportValidationError } from './reportValidation';
+import { MAX_IMAGE_DATA_URL_LENGTH, imageUriToDataUrl } from './imageDataUrl';
 
 function genderZh(g: Gender): string {
   switch (g) {
@@ -18,33 +18,6 @@ function genderZh(g: Gender): string {
     default:
       return '不愿说明';
   }
-}
-
-async function imageUriToDataUrl(uri: string): Promise<string> {
-  if (uri.startsWith('data:')) return uri;
-  // Remote http(s) — DashScope can fetch URL directly
-  if (/^https?:\/\//i.test(uri)) return uri;
-
-  if (uri.startsWith('blob:')) {
-    const blob = await (await fetch(uri)).blob();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  }
-  const lower = uri.toLowerCase();
-  const mime = lower.includes('.png')
-    ? 'image/png'
-    : lower.includes('.webp')
-      ? 'image/webp'
-      : 'image/jpeg';
-
-  const b64 = await FileSystem.readAsStringAsync(uri, {
-    encoding: FileSystem.EncodingType.Base64,
-  });
-  return `data:${mime};base64,${b64}`;
 }
 
 export class QwenAnalyzeError extends Error {
@@ -71,7 +44,7 @@ export async function analyzeWithQwen(input: AnalysisInput): Promise<AnalysisRes
   }
 
   // Reject oversized payloads; never truncate image data.
-  if (imageRef.startsWith('data:') && imageRef.length > 1_800_000) {
+  if (imageRef.startsWith('data:') && imageRef.length > MAX_IMAGE_DATA_URL_LENGTH) {
     throw new QwenAnalyzeError('图片过大，请换一张更小的自拍后再试');
   }
 

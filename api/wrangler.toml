@@ -1,0 +1,10 @@
+name = "averie-skin-api"
+main = "src/index.ts"
+compatibility_date = "2026-09-16"
+
+# Required at runtime; set via `wrangler secret put` or deploy --secrets-file.
+# Never commit real key values.
+[vars]
+# No secret values here.
+
+# Declare expected secret names (values come from secret store / secrets-file).
