@@ -29,7 +29,7 @@ export function PaywallScreen({ navigation }: Props) {
         {[
           '7 项结果的具体说明',
           '未来 14 天的早晚护理安排',
-          '洁面、保湿乳、面霜、精华、防晒的取舍',
+          '洁面、爽肤水、精华、保湿乳、面霜、防晒的取舍',
           '产品名称、成分、推荐理由和使用注意',
         ].map((x, i) => (
           <View key={x} style={{ flexDirection: 'row', gap: 14, marginBottom: 20 }}>

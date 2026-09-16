@@ -47,11 +47,11 @@ export const DECISION_LABELS = {
 } as const;
 export const CATEGORY_LABELS = {
   cleanser: '洁面',
+  toner: '爽肤水',
+  serum: '精华',
   lotion: '保湿乳',
   cream: '面霜',
-  serum: '精华',
   sunscreen: '防晒',
-  toner: '爽肤水',
 } as const;
 export const CTA_COPY = {
   primary: '查看我的护理方案',

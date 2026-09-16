@@ -830,11 +830,11 @@
                   {
                     "enum": [
                       "cleanser",
+                      "toner",
+                      "serum",
                       "lotion",
                       "cream",
-                      "serum",
-                      "sunscreen",
-                      "toner"
+                      "sunscreen"
                     ]
                   },
                   {
@@ -879,11 +879,11 @@
                   {
                     "enum": [
                       "cleanser",
+                      "toner",
+                      "serum",
                       "lotion",
                       "cream",
-                      "serum",
-                      "sunscreen",
-                      "toner"
+                      "sunscreen"
                     ]
                   },
                   {
@@ -1029,6 +1029,428 @@
                       },
                       "category": {
                         "const": "cleanser"
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "model": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "region": {
+                        "enum": [
+                          "CN",
+                          "US"
+                        ]
+                      },
+                      "ingredients": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "name",
+                            "role"
+                          ],
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 80
+                            },
+                            "role": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 200
+                            }
+                          }
+                        },
+                        "minItems": 2,
+                        "maxItems": 4
+                      },
+                      "texture": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500
+                      },
+                      "usage": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500
+                      },
+                      "caution": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 800
+                      },
+                      "source_url": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 1000,
+                        "pattern": "^https://",
+                        "readOnly": true,
+                        "description": "内部核对来源，不在用户产品卡渲染为链接"
+                      },
+                      "checked_on": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 10,
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      "mapped_concerns": {
+                        "type": "array",
+                        "items": {
+                          "enum": [
+                            "radiance",
+                            "oiliness",
+                            "pores",
+                            "texture",
+                            "tone_evenness",
+                            "fine_lines",
+                            "redness"
+                          ]
+                        },
+                        "minItems": 0,
+                        "maxItems": 7,
+                        "uniqueItems": true
+                      },
+                      "reasons": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 500
+                        },
+                        "minItems": 3,
+                        "maxItems": 5
+                      }
+                    }
+                  },
+                  "minItems": 0,
+                  "maxItems": 2
+                },
+                "selection_note": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "enum": [
+                          "hold",
+                          "not_needed"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ]
+                  },
+                  "then": {
+                    "properties": {
+                      "candidates": {
+                        "maxItems": 0
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "category",
+                "title",
+                "status",
+                "reason",
+                "related_dimensions",
+                "candidates",
+                "selection_note"
+              ],
+              "properties": {
+                "category": {
+                  "const": "toner"
+                },
+                "title": {
+                  "const": "爽肤水"
+                },
+                "status": {
+                  "enum": [
+                    "recommended",
+                    "optional",
+                    "not_needed",
+                    "hold"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                },
+                "related_dimensions": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "radiance",
+                      "oiliness",
+                      "pores",
+                      "texture",
+                      "tone_evenness",
+                      "fine_lines",
+                      "redness"
+                    ]
+                  },
+                  "minItems": 0,
+                  "maxItems": 7,
+                  "uniqueItems": true
+                },
+                "candidates": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "id",
+                      "category",
+                      "name",
+                      "model",
+                      "region",
+                      "ingredients",
+                      "texture",
+                      "usage",
+                      "caution",
+                      "source_url",
+                      "checked_on",
+                      "mapped_concerns",
+                      "reasons"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      },
+                      "category": {
+                        "const": "toner"
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "model": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "region": {
+                        "enum": [
+                          "CN",
+                          "US"
+                        ]
+                      },
+                      "ingredients": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "name",
+                            "role"
+                          ],
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 80
+                            },
+                            "role": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 200
+                            }
+                          }
+                        },
+                        "minItems": 2,
+                        "maxItems": 4
+                      },
+                      "texture": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500
+                      },
+                      "usage": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500
+                      },
+                      "caution": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 800
+                      },
+                      "source_url": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 1000,
+                        "pattern": "^https://",
+                        "readOnly": true,
+                        "description": "内部核对来源，不在用户产品卡渲染为链接"
+                      },
+                      "checked_on": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 10,
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      "mapped_concerns": {
+                        "type": "array",
+                        "items": {
+                          "enum": [
+                            "radiance",
+                            "oiliness",
+                            "pores",
+                            "texture",
+                            "tone_evenness",
+                            "fine_lines",
+                            "redness"
+                          ]
+                        },
+                        "minItems": 0,
+                        "maxItems": 7,
+                        "uniqueItems": true
+                      },
+                      "reasons": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 500
+                        },
+                        "minItems": 3,
+                        "maxItems": 5
+                      }
+                    }
+                  },
+                  "minItems": 0,
+                  "maxItems": 2
+                },
+                "selection_note": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "enum": [
+                          "hold",
+                          "not_needed"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ]
+                  },
+                  "then": {
+                    "properties": {
+                      "candidates": {
+                        "maxItems": 0
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "category",
+                "title",
+                "status",
+                "reason",
+                "related_dimensions",
+                "candidates",
+                "selection_note"
+              ],
+              "properties": {
+                "category": {
+                  "const": "serum"
+                },
+                "title": {
+                  "const": "精华"
+                },
+                "status": {
+                  "enum": [
+                    "recommended",
+                    "optional",
+                    "not_needed",
+                    "hold"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                },
+                "related_dimensions": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "radiance",
+                      "oiliness",
+                      "pores",
+                      "texture",
+                      "tone_evenness",
+                      "fine_lines",
+                      "redness"
+                    ]
+                  },
+                  "minItems": 0,
+                  "maxItems": 7,
+                  "uniqueItems": true
+                },
+                "candidates": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "id",
+                      "category",
+                      "name",
+                      "model",
+                      "region",
+                      "ingredients",
+                      "texture",
+                      "usage",
+                      "caution",
+                      "source_url",
+                      "checked_on",
+                      "mapped_concerns",
+                      "reasons"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      },
+                      "category": {
+                        "const": "serum"
                       },
                       "name": {
                         "type": "string",
@@ -1599,217 +2021,6 @@
               ],
               "properties": {
                 "category": {
-                  "const": "serum"
-                },
-                "title": {
-                  "const": "精华"
-                },
-                "status": {
-                  "enum": [
-                    "recommended",
-                    "optional",
-                    "not_needed",
-                    "hold"
-                  ]
-                },
-                "reason": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 500
-                },
-                "related_dimensions": {
-                  "type": "array",
-                  "items": {
-                    "enum": [
-                      "radiance",
-                      "oiliness",
-                      "pores",
-                      "texture",
-                      "tone_evenness",
-                      "fine_lines",
-                      "redness"
-                    ]
-                  },
-                  "minItems": 0,
-                  "maxItems": 7,
-                  "uniqueItems": true
-                },
-                "candidates": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "required": [
-                      "id",
-                      "category",
-                      "name",
-                      "model",
-                      "region",
-                      "ingredients",
-                      "texture",
-                      "usage",
-                      "caution",
-                      "source_url",
-                      "checked_on",
-                      "mapped_concerns",
-                      "reasons"
-                    ],
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 100
-                      },
-                      "category": {
-                        "const": "serum"
-                      },
-                      "name": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 120
-                      },
-                      "model": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 120
-                      },
-                      "region": {
-                        "enum": [
-                          "CN",
-                          "US"
-                        ]
-                      },
-                      "ingredients": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "name",
-                            "role"
-                          ],
-                          "properties": {
-                            "name": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 80
-                            },
-                            "role": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 200
-                            }
-                          }
-                        },
-                        "minItems": 2,
-                        "maxItems": 4
-                      },
-                      "texture": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 500
-                      },
-                      "usage": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 500
-                      },
-                      "caution": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 800
-                      },
-                      "source_url": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 1000,
-                        "pattern": "^https://",
-                        "readOnly": true,
-                        "description": "内部核对来源，不在用户产品卡渲染为链接"
-                      },
-                      "checked_on": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 10,
-                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
-                      },
-                      "mapped_concerns": {
-                        "type": "array",
-                        "items": {
-                          "enum": [
-                            "radiance",
-                            "oiliness",
-                            "pores",
-                            "texture",
-                            "tone_evenness",
-                            "fine_lines",
-                            "redness"
-                          ]
-                        },
-                        "minItems": 0,
-                        "maxItems": 7,
-                        "uniqueItems": true
-                      },
-                      "reasons": {
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 500
-                        },
-                        "minItems": 3,
-                        "maxItems": 5
-                      }
-                    }
-                  },
-                  "minItems": 0,
-                  "maxItems": 2
-                },
-                "selection_note": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 500
-                }
-              },
-              "allOf": [
-                {
-                  "if": {
-                    "properties": {
-                      "status": {
-                        "enum": [
-                          "hold",
-                          "not_needed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "status"
-                    ]
-                  },
-                  "then": {
-                    "properties": {
-                      "candidates": {
-                        "maxItems": 0
-                      }
-                    }
-                  }
-                }
-              ]
-            },
-            {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "category",
-                "title",
-                "status",
-                "reason",
-                "related_dimensions",
-                "candidates",
-                "selection_note"
-              ],
-              "properties": {
-                "category": {
                   "const": "sunscreen"
                 },
                 "title": {
@@ -1873,217 +2084,6 @@
                       },
                       "category": {
                         "const": "sunscreen"
-                      },
-                      "name": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 120
-                      },
-                      "model": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 120
-                      },
-                      "region": {
-                        "enum": [
-                          "CN",
-                          "US"
-                        ]
-                      },
-                      "ingredients": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "name",
-                            "role"
-                          ],
-                          "properties": {
-                            "name": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 80
-                            },
-                            "role": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 200
-                            }
-                          }
-                        },
-                        "minItems": 2,
-                        "maxItems": 4
-                      },
-                      "texture": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 500
-                      },
-                      "usage": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 500
-                      },
-                      "caution": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 800
-                      },
-                      "source_url": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 1000,
-                        "pattern": "^https://",
-                        "readOnly": true,
-                        "description": "内部核对来源，不在用户产品卡渲染为链接"
-                      },
-                      "checked_on": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 10,
-                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
-                      },
-                      "mapped_concerns": {
-                        "type": "array",
-                        "items": {
-                          "enum": [
-                            "radiance",
-                            "oiliness",
-                            "pores",
-                            "texture",
-                            "tone_evenness",
-                            "fine_lines",
-                            "redness"
-                          ]
-                        },
-                        "minItems": 0,
-                        "maxItems": 7,
-                        "uniqueItems": true
-                      },
-                      "reasons": {
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 500
-                        },
-                        "minItems": 3,
-                        "maxItems": 5
-                      }
-                    }
-                  },
-                  "minItems": 0,
-                  "maxItems": 2
-                },
-                "selection_note": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 500
-                }
-              },
-              "allOf": [
-                {
-                  "if": {
-                    "properties": {
-                      "status": {
-                        "enum": [
-                          "hold",
-                          "not_needed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "status"
-                    ]
-                  },
-                  "then": {
-                    "properties": {
-                      "candidates": {
-                        "maxItems": 0
-                      }
-                    }
-                  }
-                }
-              ]
-            },
-            {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "category",
-                "title",
-                "status",
-                "reason",
-                "related_dimensions",
-                "candidates",
-                "selection_note"
-              ],
-              "properties": {
-                "category": {
-                  "const": "toner"
-                },
-                "title": {
-                  "const": "爽肤水"
-                },
-                "status": {
-                  "enum": [
-                    "recommended",
-                    "optional",
-                    "not_needed",
-                    "hold"
-                  ]
-                },
-                "reason": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 500
-                },
-                "related_dimensions": {
-                  "type": "array",
-                  "items": {
-                    "enum": [
-                      "radiance",
-                      "oiliness",
-                      "pores",
-                      "texture",
-                      "tone_evenness",
-                      "fine_lines",
-                      "redness"
-                    ]
-                  },
-                  "minItems": 0,
-                  "maxItems": 7,
-                  "uniqueItems": true
-                },
-                "candidates": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "required": [
-                      "id",
-                      "category",
-                      "name",
-                      "model",
-                      "region",
-                      "ingredients",
-                      "texture",
-                      "usage",
-                      "caution",
-                      "source_url",
-                      "checked_on",
-                      "mapped_concerns",
-                      "reasons"
-                    ],
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 100
-                      },
-                      "category": {
-                        "const": "toner"
                       },
                       "name": {
                         "type": "string",

@@ -13,11 +13,11 @@ import { PRODUCT_CATALOG } from './productCatalog';
 import { CATEGORY_LABELS } from './copyPack';
 export const CATEGORY_ORDER: ProductCategory[] = [
   'cleanser',
+  'toner',
+  'serum',
   'lotion',
   'cream',
-  'serum',
   'sunscreen',
-  'toner',
 ];
 export function buildCarePlan(
   dims: PerceptionDimension[],
@@ -118,21 +118,9 @@ export function buildCarePlan(
       ['oiliness', 'pores'],
     ),
     decision(
-      'lotion',
-      dry ? 'optional' : 'recommended',
-      dry
-        ? '你提到洗后容易发紧，可以把面霜作为主要保湿，乳液留作更轻的替代。'
-        : '保湿先从一款乳液或凝露开始。额鼻出油也不等于全脸都不需要保湿。',
-      ['texture', 'oiliness'],
-    ),
-    decision(
-      'cream',
-      dry ? 'recommended' : unknown ? 'optional' : 'not_needed',
-      dry
-        ? '你提到洗后发紧，可以用面霜替代乳液，先看是否更舒服。'
-        : unknown
-          ? '照片看不出洗后是否发紧。如果乳液已够保湿，就不用额外加面霜；仍觉干时再考虑替代。'
-          : '你没有洗后发紧的困扰，先用一款保湿乳即可，暂不额外叠面霜。',
+      'toner',
+      'not_needed',
+      '已有保湿乳或面霜时，爽肤水不是必须步骤。本次没有需要额外增加它的依据。',
       ['texture'],
     ),
     decision(
@@ -156,16 +144,28 @@ export function buildCarePlan(
       ['redness', 'texture'],
     ),
     decision(
+      'lotion',
+      dry ? 'optional' : 'recommended',
+      dry
+        ? '你提到洗后容易发紧，可以把面霜作为主要保湿，乳液留作更轻的替代。'
+        : '保湿先从一款乳液或凝露开始。额鼻出油也不等于全脸都不需要保湿。',
+      ['texture', 'oiliness'],
+    ),
+    decision(
+      'cream',
+      dry ? 'recommended' : unknown ? 'optional' : 'not_needed',
+      dry
+        ? '你提到洗后发紧，可以用面霜替代乳液，先看是否更舒服。'
+        : unknown
+          ? '照片看不出洗后是否发紧。如果乳液已够保湿，就不用额外加面霜；仍觉干时再考虑替代。'
+          : '你没有洗后发紧的困扰，先用一款保湿乳即可，暂不额外叠面霜。',
+      ['texture'],
+    ),
+    decision(
       'sunscreen',
       'recommended',
       '日间防护是基础步骤，用于日常维护；无需等肤色不均或细纹明显才开始。',
       ['tone_evenness', 'fine_lines'],
-    ),
-    decision(
-      'toner',
-      'not_needed',
-      '已有保湿乳或面霜时，爽肤水不是必须步骤。本次没有需要额外增加它的依据。',
-      ['texture'],
     ),
   ];
   const moisturize: ProductCategory = dry ? 'cream' : 'lotion';

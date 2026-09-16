@@ -291,6 +291,29 @@
         "selection_note": "这两款是替代选择，选一款即可。"
       },
       {
+        "category": "toner",
+        "title": "爽肤水",
+        "status": "not_needed",
+        "reason": "已有保湿乳或面霜时，爽肤水不是必须步骤。本次没有需要额外增加它的依据。",
+        "related_dimensions": [
+          "texture"
+        ],
+        "candidates": [],
+        "selection_note": "本次不安排新增这一类产品。"
+      },
+      {
+        "category": "serum",
+        "title": "精华",
+        "status": "hold",
+        "reason": "照片里有局部泛红，先减少新产品。暂缓新增功效精华，不代表所有精华都不能用。",
+        "related_dimensions": [
+          "redness",
+          "texture"
+        ],
+        "candidates": [],
+        "selection_note": "本次不安排新增这一类产品。"
+      },
+      {
         "category": "lotion",
         "title": "保湿乳",
         "status": "recommended",
@@ -454,18 +477,6 @@
         "selection_note": "这两款是替代选择，选一款即可。"
       },
       {
-        "category": "serum",
-        "title": "精华",
-        "status": "hold",
-        "reason": "照片里有局部泛红，先减少新产品。暂缓新增功效精华，不代表所有精华都不能用。",
-        "related_dimensions": [
-          "redness",
-          "texture"
-        ],
-        "candidates": [],
-        "selection_note": "本次不安排新增这一类产品。"
-      },
-      {
         "category": "sunscreen",
         "title": "防晒",
         "status": "recommended",
@@ -476,17 +487,6 @@
         ],
         "candidates": [],
         "selection_note": "防晒仍建议保留。目前目录还没有同时核对配方与防护等级的型号，暂不列具体产品；可继续使用已耐受、标有 UVA/UVB 防护和 SPF30 或以上的防晒。"
-      },
-      {
-        "category": "toner",
-        "title": "爽肤水",
-        "status": "not_needed",
-        "reason": "已有保湿乳或面霜时，爽肤水不是必须步骤。本次没有需要额外增加它的依据。",
-        "related_dimensions": [
-          "texture"
-        ],
-        "candidates": [],
-        "selection_note": "本次不安排新增这一类产品。"
       }
     ],
     "note": "每个品类都给出取舍。建议保留的是护理步骤，不是必须购买；乳液和面霜通常选一个。同类候选不用一起买。"

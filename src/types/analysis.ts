@@ -16,7 +16,7 @@ export type FaceRegion =
   'forehead' | 'nose' | 'cheeks' | 'chin' | 'periocular' | 'perioral';
 export type DimStatus = '表现不错' | '可以留意' | '优先关注' | '暂无法判断';
 export type ProductCategory =
-  'cleanser' | 'lotion' | 'cream' | 'serum' | 'sunscreen' | 'toner';
+  'cleanser' | 'toner' | 'serum' | 'lotion' | 'cream' | 'sunscreen';
 export type CareGoal =
   'oiliness' | 'pores' | 'dryness' | 'tone' | 'fine_lines' | 'simple';
 export interface CarePreferences {
