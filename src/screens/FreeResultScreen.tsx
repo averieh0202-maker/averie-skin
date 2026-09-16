@@ -1,486 +1,159 @@
 import React from 'react';
-import {
-  View,
-  StyleSheet,
-  Text,
-  ScrollView,
-  Dimensions,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, StyleSheet } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { useSession } from '../context/SessionContext';
 import { PrimaryButton, SecondaryButton } from '../components/ui';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, DISCLAIMER, tierFromScore } from '../theme/tiers';
-import { PerceptionDimension } from '../types/analysis';
-import {
-  CTA_COPY,
-  DIMENSION_META,
-  EVIDENCE_MAP_TIP,
-} from '../lib/copyPack';
-
+import { ReportPage, EngineNote, MetricRow, s } from '../components/report';
+import { colors } from '../theme/tiers';
+import { CTA_COPY } from '../lib/copyPack';
 type Props = NativeStackScreenProps<RootStackParamList, 'FreeResult'>;
-
-const { width } = Dimensions.get('window');
-
 export function FreeResultScreen({ navigation }: Props) {
   const { result } = useSession();
-
-  if (!result) {
+  if (!result)
     return (
-      <View style={styles.fallback}>
-        <Text style={styles.fallbackText}>暂无结果</Text>
-        <SecondaryButton
-          label="重新开始"
-          onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Gender' }] })}
-        />
-      </View>
+      <ReportPage label="皮肤分析">
+        <Text style={s.title}>还没有分析结果</Text>
+        <SecondaryButton label="返回首页" onPress={() => navigation.navigate('Gender')} />
+      </ReportPage>
     );
-  }
-
-  const score = result.skin_score.value;
-  const tier = tierFromScore(score);
-  const dimensions = result.perception_scores;
-
+  const complete = result.analysis_status === 'complete';
+  const priorities = result.summary_free.priorities.map((k) =>
+    result.perception_scores.find((d) => d.key === k)!,
+  );
   return (
-    <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
-      <LinearGradient
-        colors={tier.gradient}
-        start={{ x: 0.1, y: 0 }}
-        end={{ x: 0.9, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <View
-        style={[
-          styles.glow,
+    <ReportPage label="我的皮肤报告">
+      <EngineNote result={result} />
+      <Text style={s.eyebrow}>这次的皮肤状态</Text>
+      <View style={local.hero}>
+        <View style={local.heroText}>
+          <Text style={s.title}>{result.skin_type.label_zh}</Text>
+          <Text style={local.tier}>{result.skin_score.tier_name}</Text>
+        </View>
+        <View style={local.scoreBox}>
+          <Text style={local.score}>{result.skin_score.value ?? '—'}</Text>
+          <Text style={local.scoreLabel}>外观评分 / 100</Text>
+        </View>
+      </View>
+      <Text style={s.body}>{result.skin_type.explanation}</Text>
+      {complete &&
+      result.perception_scores.find((d) => d.value !== null && d.value >= 80) ? (
+        <Text style={[s.body, { marginTop: 12 }]}>
           {
-            opacity: tier.glowOpacity,
-            backgroundColor: tier.accent,
-          },
-        ]}
-      />
-      <View style={[styles.glowSoft, { backgroundColor: tier.scoreColor }]} />
-
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={styles.brand}>Averie Skin</Text>
-
-        {/* Engine proof — Qwen vs Mock (self-evident for Averie) */}
-        <View style={styles.engineChip}>
-          <Text style={styles.engineChipTitle}>
-            本次引擎：{result.meta.engine === 'qwen' ? 'Qwen' : 'Mock'}
-          </Text>
-          <Text style={styles.engineChipMeta}>
-            model：{result.meta.model_id || '—'}
-          </Text>
-          {result.meta.fallback_reason ? (
-            <Text style={styles.engineChipFallback}>
-              fallback：{result.meta.fallback_reason}
-            </Text>
-          ) : null}
+            result.perception_scores.find((d) => d.value !== null && d.value >= 80)!
+              .observation
+          }
+        </Text>
+      ) : null}
+      <Text style={[s.small, { marginTop: 12 }]}>
+        分数越高，表示照片中这一项的表现越好。
+      </Text>
+      {!complete ? (
+        <View style={[s.actionBox, { marginTop: 20 }]}>
+          <Text style={s.action}>{result.quality_note}</Text>
+          <View style={{ height: 12 }} />
+          <SecondaryButton
+            label="调整照片"
+            onPress={() => navigation.replace('Selfie')}
+          />
         </View>
-
-        {result.meta.fallback_reason ? (
-          <View style={styles.fallbackBanner}>
-            <Text style={styles.fallbackBannerText}>
-              智能分析未成功，已回退 Mock 演示。原因：{result.meta.fallback_reason}
-            </Text>
-          </View>
-        ) : null}
-
-        {/* Hero: large score + tier */}
-        <View style={styles.scoreBlock}>
-          <Text style={[styles.scoreUnit, { color: tier.badgeText }]}>肤质评分</Text>
-          <Text style={[styles.score, { color: tier.scoreColor }]}>{score}</Text>
-          <View style={styles.scoreUnderline}>
-            <View
-              style={[styles.scoreUnderlineFill, { backgroundColor: tier.accent }]}
-            />
-          </View>
-        </View>
-
-        <View
-          style={[
-            styles.badge,
-            {
-              backgroundColor: tier.badgeBg,
-              borderColor: tier.badgeBorder,
-            },
-            tier.id === 'porcelain' && styles.badgePorcelain,
-            tier.id === 'glow' && styles.badgeGlow,
-            tier.id === 'steady' && styles.badgeSteady,
-          ]}
-        >
-          <Text style={[styles.badgeText, { color: tier.badgeText }]}>
-            {tier.name}
+      ) : null}
+      {priorities.length > 0 ? (
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>
+            {priorities.length === 1 ? '先留意这件事' : '先留意这两件事'}
           </Text>
-          <Text style={[styles.badgeSub, { color: tier.badgeText }]}>
-            {tier.subtitle}
-          </Text>
-        </View>
-
-        {/* Skin tendency + free header: 优势 + 1–2 关注点 + neutral disclaimer */}
-        <View
-          style={[
-            styles.tendencyCard,
-            { backgroundColor: tier.cardBg, borderColor: tier.cardBorder },
-          ]}
-        >
-          <Text style={styles.tendencyLabel}>肤质倾向</Text>
-          <Text style={[styles.tendencyValue, { color: tier.scoreColor }]}>
-            {result.skin_tendency}
-          </Text>
-          <Text style={styles.headline}>{result.summary_free.headline}</Text>
-        </View>
-
-        {/* 7 perception dimensions — fixed helper lines v2.2 */}
-        <View
-          style={[
-            styles.dimsCard,
-            { backgroundColor: tier.cardBg, borderColor: tier.cardBorder },
-          ]}
-        >
-          <Text style={styles.dimsTitle}>分项观感</Text>
-          <Text style={styles.dimsHint}>外观感知 · 基于当前影像</Text>
-          <Text style={styles.evidenceTip}>ⓘ {EVIDENCE_MAP_TIP}</Text>
-          {dimensions.map((d) => (
-            <DimensionRow key={d.key} dim={d} accent={tier.accent} />
+          {priorities.map((d, i) => (
+            <View key={d.key} style={local.priority}>
+              <Text style={local.number}>{String(i + 1).padStart(2, '0')}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={local.priorityTitle}>{d.observation}</Text>
+                <Text style={s.body}>{d.action}</Text>
+              </View>
+            </View>
           ))}
         </View>
-
-        <View style={styles.ctaBlock}>
+      ) : (
+        <View style={[s.card, { marginTop: 24 }]}>
+          <Text style={s.body}>{result.summary_free.headline}</Text>
+        </View>
+      )}
+      <View style={s.section}>
+        <View style={s.between}>
+          <Text style={s.sectionTitle}>逐项看看</Text>
+          <Text style={s.small}>7 项外观观察</Text>
+        </View>
+        <View style={s.card}>
+          {result.perception_scores.map((d) => (
+            <MetricRow key={d.key} dim={d} />
+          ))}
+        </View>
+      </View>
+      {complete ? (
+        <View style={local.cta}>
+          <Text style={local.ctaTitle}>把结果变成每天的护理</Text>
+          <Text style={[s.body, { marginBottom: 18 }]}>{CTA_COPY.secondary}</Text>
           <PrimaryButton
-            label={CTA_COPY.primary}
+            label={result.meta.engine === 'mock' ? '查看示例护理方案' : CTA_COPY.primary}
             onPress={() => navigation.navigate('Paywall')}
           />
-          <Text style={styles.ctaHint}>{CTA_COPY.secondary}</Text>
-        </View>
-
-        <Text style={styles.disclaimer}>{DISCLAIMER}</Text>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
-
-function DimensionRow({
-  dim,
-  accent,
-}: {
-  dim: PerceptionDimension;
-  accent: string;
-}) {
-  const meta = DIMENSION_META[dim.key];
-  return (
-    <View style={styles.dimRow}>
-      <View style={styles.dimHeader}>
-        <View style={styles.dimLabelWrap}>
-          <Text style={styles.dimLabel}>{meta?.labelZh ?? dim.label_zh}</Text>
-          {dim.status ? (
-            <Text style={styles.dimStatus}>{dim.status}</Text>
-          ) : null}
-        </View>
-        <Text style={[styles.dimValue, { color: accent }]}>{dim.value}</Text>
-      </View>
-      <View style={styles.dimTrack}>
-        <View
-          style={[
-            styles.dimFill,
-            {
-              width: `${Math.max(4, Math.min(100, dim.value))}%`,
-              backgroundColor: accent,
-            },
-          ]}
-        />
-      </View>
-      {meta ? (
-        <View style={styles.dimHelper}>
-          <Text style={styles.dimHelperLine}>
-            测什么 · {meta.measuresWhat}
-          </Text>
-          <Text style={styles.dimHelperLine}>
-            常见影响因素 · {meta.commonFactors}
+          <Text style={[s.small, { textAlign: 'center', marginTop: 10 }]}>
+            含每个品类的取舍、成分与使用方法
           </Text>
         </View>
-      ) : (
-        <Text style={styles.dimObs}>{dim.observation}</Text>
-      )}
-    </View>
+      ) : null}
+      <Text style={[s.small, { marginTop: 28 }]}>{result.disclaimer}</Text>
+    </ReportPage>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg },
-  glow: {
-    position: 'absolute',
-    width: width * 0.95,
-    height: width * 0.95,
-    borderRadius: width,
-    top: -width * 0.2,
-    alignSelf: 'center',
-    left: width * 0.025,
-  },
-  glowSoft: {
-    position: 'absolute',
-    width: width * 0.55,
-    height: width * 0.55,
-    borderRadius: width,
-    top: width * 0.08,
-    alignSelf: 'center',
-    left: width * 0.225,
-    opacity: 0.08,
-  },
-  scroll: {
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 44,
+const local = StyleSheet.create({
+  hero: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginTop: 10,
+    marginBottom: 18,
   },
-  brand: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.5)',
-    letterSpacing: 3,
-    textTransform: 'uppercase',
-    marginBottom: 32,
-  },
-  engineChip: {
-    alignSelf: 'stretch',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.22)',
-    backgroundColor: 'rgba(0,0,0,0.28)',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    marginBottom: 14,
-  },
-  engineChipTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: 'rgba(255,255,255,0.92)',
-    letterSpacing: 0.3,
-  },
-  engineChipMeta: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.55)',
-    marginTop: 4,
-  },
-  engineChipFallback: {
-    fontSize: 11,
-    color: '#FFB4A8',
-    marginTop: 4,
-    lineHeight: 16,
-  },
-  fallbackBanner: {
-    alignSelf: 'stretch',
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 120, 90, 0.22)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 160, 120, 0.45)',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    marginBottom: 16,
-  },
-  fallbackBannerText: {
-    fontSize: 12,
-    color: 'rgba(255,230,220,0.95)',
-    lineHeight: 18,
-  },
-
-  scoreBlock: { alignItems: 'center', marginBottom: 18 },
-  scoreUnit: {
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 1.5,
-    opacity: 0.7,
-    marginBottom: 4,
+  heroText: { flex: 1 },
+  tier: { fontSize: 14, color: colors.textSecondary, marginTop: 8 },
+  scoreBox: {
+    backgroundColor: '#E9EDE2',
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    borderRadius: 18,
+    alignItems: 'center',
+    minWidth: 112,
   },
   score: {
-    fontSize: 120,
-    fontWeight: '200',
-    letterSpacing: -6,
-    lineHeight: 128,
+    fontSize: 54,
+    lineHeight: 64,
+    fontWeight: '300',
+    letterSpacing: -2,
+    color: colors.primary,
   },
-  scoreUnderline: {
-    width: 56,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    marginTop: 4,
-    overflow: 'hidden',
-  },
-  scoreUnderlineFill: {
-    width: '70%',
-    height: '100%',
-    borderRadius: 2,
-    alignSelf: 'center',
-  },
-  badge: {
-    paddingHorizontal: 26,
-    paddingVertical: 14,
-    borderRadius: 999,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    marginBottom: 28,
-    minWidth: 152,
-  },
-  badgePorcelain: {
-    borderWidth: 2,
-    shadowColor: '#FFE8C8',
-    shadowOpacity: 0.5,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 0 },
-  },
-  badgeGlow: {
-    shadowColor: '#6EC8E8',
-    shadowOpacity: 0.45,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 0 },
-  },
-  badgeSteady: {
-    shadowColor: '#FFFFFF',
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 0 },
-  },
-  badgeText: {
-    fontSize: 22,
-    fontWeight: '700',
-    letterSpacing: 2,
-  },
-  badgeSub: {
-    fontSize: 11,
-    opacity: 0.65,
-    marginTop: 3,
-    letterSpacing: 0.5,
-  },
-  tendencyCard: {
-    width: '100%',
-    borderRadius: 22,
-    borderWidth: 1,
-    paddingVertical: 20,
-    paddingHorizontal: 22,
-    marginBottom: 14,
-  },
-  tendencyLabel: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.5)',
-    letterSpacing: 1,
-    marginBottom: 6,
-  },
-  tendencyValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: -0.2,
-    lineHeight: 26,
-    marginBottom: 10,
-  },
-  headline: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.72)',
-    lineHeight: 21,
-  },
-  dimsCard: {
-    width: '100%',
-    borderRadius: 22,
-    borderWidth: 1,
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-    marginBottom: 28,
-  },
-  dimsTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: 'rgba(255,255,255,0.92)',
-    marginBottom: 2,
-  },
-  dimsHint: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.42)',
-    marginBottom: 8,
-  },
-  evidenceTip: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.48)',
-    lineHeight: 16,
-    marginBottom: 16,
-  },
-  dimRow: { marginBottom: 16 },
-  dimHeader: {
+  scoreLabel: { fontSize: 11, color: colors.textSecondary },
+  priority: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-    marginBottom: 6,
-  },
-  dimLabelWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  dimLabel: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.78)',
-    fontWeight: '500',
-  },
-  dimStatus: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.45)',
-    fontWeight: '500',
-  },
-  dimValue: {
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: -0.3,
-  },
-  dimTrack: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    overflow: 'hidden',
-  },
-  dimFill: {
-    height: '100%',
-    borderRadius: 3,
-    opacity: 0.9,
-  },
-  dimObs: {
-    marginTop: 6,
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.55)',
-    lineHeight: 17,
-  },
-  dimHelper: {
-    marginTop: 6,
-    gap: 2,
-  },
-  dimHelperLine: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.52)',
-    lineHeight: 16,
-  },
-  ctaBlock: { width: '100%', marginBottom: 20 },
-  ctaHint: {
-    textAlign: 'center',
-    color: 'rgba(255,255,255,0.42)',
-    fontSize: 12,
-    marginTop: 12,
-  },
-  disclaimer: {
-    fontSize: 10,
-    color: 'rgba(255,255,255,0.32)',
-    textAlign: 'center',
-    lineHeight: 15,
-    paddingHorizontal: 8,
-  },
-  fallback: {
-    flex: 1,
-    backgroundColor: colors.bg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
     gap: 16,
+    borderTopWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: 18,
   },
-  fallbackText: { color: colors.text, fontSize: 16 },
+  number: { fontSize: 14, color: '#879582', marginTop: 4 },
+  priorityTitle: {
+    fontSize: 17,
+    lineHeight: 27,
+    color: colors.text,
+    fontWeight: '500',
+    marginBottom: 6,
+  },
+  cta: { marginTop: 28, paddingTop: 6 },
+  ctaTitle: {
+    fontSize: 20,
+    lineHeight: 30,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 6,
+  },
 });

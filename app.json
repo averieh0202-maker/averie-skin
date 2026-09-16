@@ -26,11 +26,16 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "permissions": ["CAMERA", "READ_MEDIA_IMAGES"],
+      "permissions": [
+        "CAMERA",
+        "READ_MEDIA_IMAGES"
+      ],
       "package": "com.averie.skin"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "single"
     },
     "plugins": [
       [
@@ -40,6 +45,9 @@
           "cameraPermission": "需要相机权限以拍摄自拍进行肤况外观评估。"
         }
       ]
-    ]
+    ],
+    "experiments": {
+      "baseUrl": "/averie-skin"
+    }
   }
 }

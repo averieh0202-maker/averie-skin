@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "rootDir": "src",
+    "outDir": ".test-build"
+  },
+  "include": [
+    "src/lib/mockAnalyzer.ts",
+    "src/lib/mapLlmToResult.ts",
+    "src/lib/reportValidation.ts",
+    "src/lib/carePlan.ts",
+    "src/lib/productCatalog.ts",
+    "src/lib/llmSchema.ts",
+    "src/lib/copyPack.ts",
+    "src/lib/zoneTips.ts",
+    "src/theme/tiers.ts",
+    "src/types/analysis.ts",
+    "src/lib/reportSchema.ts"
+  ]
+}

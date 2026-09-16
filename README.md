@@ -1,115 +1,61 @@
-# Averie Skin
+# Averie Skin v3
 
-中文（zh-Hans）皮肤外观分析 MVP。Expo + React Native + TypeScript。iOS 优先。
+在 5d0fde8 对应交接包上重写的皮肤外观报告、护理规则和界面。Expo 57 / React Native / TypeScript。
 
-> 外观肤况评估与护肤参考，不能替代医疗建议。非医疗诊断，**无任何效果承诺**。
+## 运行
 
-## 快速开始
+使用 Node.js 22.13 或以上（本次构建使用 Node 24）。解压后进入本文件所在目录：
 
-```bash
-git clone https://github.com/averieh0202-maker/averie-skin.git
-cd averie-skin
-npm install
-npx expo start
+```sh
+npm ci
+npm run web
 ```
 
-然后用 Expo Go（iOS）扫码，或按 `i` / `w` 打开模拟器 / Web。
+首页点击“先看一份示例报告”即可查看新版，不需要 Key 或上传照片。
 
-## Averie 小白三步（接 Qwen）
+本地测试真实 Qwen 时，自行复制 `.env.example` 为 `.env` 并填写开发 Key。然后运行 `npx expo start -c`，在“分析设置”选择 Qwen。不要把 Key 发到聊天或提交代码。`EXPO_PUBLIC_*` 和通过 app.config 注入的 extra 都会进入客户端；生产版本必须改用后端代理。
 
-1. **拉代码**：`git pull origin main`
-2. **在项目根目录创建 `.env`（不要提交）**，写入这一行（把 Key 换成你自己的）：
-   ```bash
-   EXPO_PUBLIC_DASHSCOPE_API_KEY=你的百炼Key
-   ```
-   可选同时关掉强制 Mock：
-   ```bash
-   EXPO_PUBLIC_USE_MOCK=0
-   EXPO_PUBLIC_ANALYZER_MARKET=cn
-   ```
-3. **重启 Expo**（改 `.env` 后必须重启）：`npx expo start`，首页选 **Qwen**（或 Auto），自拍后扫码用 Expo Go 测试。失败会弹友好提示并自动回退 Mock。
+原生端运行 `npx expo start -c`，使用兼容 SDK 57 的开发环境。本次没有完成 iOS/Android 真机验收，不把 Web 通过等同于原生摄像头与权限通过。
 
-> ⚠️ `EXPO_PUBLIC_*` 仅供 **Expo Go 本地测试**。Key 会进客户端 JS bundle，**永远不要 commit `.env`**。正式上线必须改成 **后端代理**，不要把生产 Key 打进 App。
+## 验证与合同导出
 
-也可使用 `DASHSCOPE_API_KEY=`（经 `app.config.js` 注入 `extra`）；Expo Go 直连测试仍推荐 `EXPO_PUBLIC_DASHSCOPE_API_KEY`。
-
-## 可点击流程
-
-1. **性别**（女 / 男 / 不愿说明）+ **分析引擎开关**（Mock / Qwen / Auto）
-2. **年龄**（13–99）
-3. **自拍**（相机或相册）
-4. **免费结果**：巨大肤质评分 0–100 + 段位徽章 + 肤质倾向
-5. **单次付费解锁**（Stub 支付，演示用）
-6. **完整付费报告**：七维详解、分区提示（额头/鼻子/眼周/脸颊/下颌·口周）、14 天步骤、产品
-
-**无护肤问卷。** 结果页**无复测入口**；重新走流程 = 再次付费。
-
-## 段位视觉
-
-| 分数 | 段位 | 视觉 |
-|------|------|------|
-| 0–39 | 待焕新 | 低饱和柔雾 |
-| 40–59 | 修护期 | 淡色光晕 |
-| 60–74 | 稳定光 | 干净白光 |
-| 75–89 | 透亮 | 水光折射 |
-| 90–100 | 瓷感 | 玻璃高光 / 稀有边框 |
-
-## 架构
-
-```
-App.tsx
-└── SessionProvider
-    └── RootNavigator
-        ├── GenderScreen      # Mock / Qwen / Auto 开关
-        ├── AgeScreen
-        ├── SelfieScreen      # 异步分析 + 失败提示
-        ├── FreeResultScreen
-        ├── PaywallScreen
-        └── PaidReportScreen  # 总览/分项/分区/计划/产品/注意
+```sh
+npm run typecheck
+npm test
+npm run export:contracts
+npx expo export --platform web --output-dir web-build
 ```
 
-| 路径 | 职责 |
-|------|------|
-| `src/types/analysis.ts` | Schema v1.4（含 periocular 眼周） |
-| `src/lib/mockAnalyzer.ts` | 本地 Mock（默认） |
-| `src/lib/zoneTips.ts` | 多分区 zone_tips（防脸颊-only） |
-| `src/lib/analyze.ts` | 路由：Mock ↔ Qwen |
-| `src/lib/qwenAnalyzer.ts` | 百炼 `qwen3-vl-plus` 视觉调用 |
-| `src/lib/mapLlmToResult.ts` | LLM JSON → 七维/倾向/分区/付费结构 |
-| `src/lib/config.ts` | `expo-constants` 读取 env |
-| `app.config.js` | 把 `.env` 注入 `extra` |
-| `.env.example` | Key 变量名模板（无真实密钥） |
+`npm test` 覆盖评分、字段缺失、低质量图片、用户偏好、未成年与地区产品过滤、精华暂缓、保湿不重复叠加以及两份 Schema。`export:contracts` 会从实际源码重新生成 docs 内的 JSON、提示词和完整中文示例。
 
-### 环境变量（精确名称）
+## 交付文件
 
-| 变量 | 作用 |
-|------|------|
-| `EXPO_PUBLIC_USE_MOCK` | `1` 默认 Mock；`0` 有 Key 时倾向 Qwen |
-| `EXPO_PUBLIC_ANALYZER_MARKET` | `cn` \| `overseas` |
-| `EXPO_PUBLIC_DASHSCOPE_API_KEY` | 百炼 Key（Expo Go 测试用） |
-| `DASHSCOPE_API_KEY` | 同上（经 app.config 注入） |
+- `docs/框架与中文文案规范.md`：竞品/社区来源、信息架构、评分、文案规则、六类产品取舍和工程边界。
+- `docs/llm-output.schema.json`：模型只返回观察的合同。
+- `docs/report-output.schema.json`：免费与完整报告对象的字段合同。
+- `docs/完整示例报告.md`、`docs/example-report.json`：28 岁女性、混合偏油场景的完整报告。
+- `docs/example-observations.json`：该报告对应的模型观察样本。
+- `docs/product-catalog.json`：核对过的型号、成分角色、来源与日期。
+- `docs/model-prompt.txt`：当前模型系统提示词。
 
-**切勿提交** `.env` / `.env.local`（已在 `.gitignore`）。Averie 自行把 Key 贴进本地 `.env`，不要把 Key 发到聊天。
+## 主要代码
 
-### 模型路由
+| 文件 | 职责 |
+|---|---|
+| `src/lib/llmSchema.ts` | 模型合同与提示词 |
+| `src/lib/reportValidation.ts` | 拒绝格式错误、缺项和部分不合规输出 |
+| `src/lib/mapLlmToResult.ts` | 观察转换为展示分、顺序、结果 |
+| `src/lib/carePlan.ts` | 六类产品取舍与十四天安排 |
+| `src/lib/productCatalog.ts` | 已核对的产品事实，禁止模型补配方 |
+| `src/lib/reportSchema.ts` | 完整应用报告合同 |
+| `src/components/report.tsx` | 报告、分项、产品卡组件 |
+| `src/screens/FreeResultScreen.tsx` | 免费结果 |
+| `src/screens/PaidReportScreen.tsx` | 默认折叠的完整报告 |
 
-| 市场 | 主模型 | 失败 |
-|------|--------|------|
-| 中国 | **qwen3-vl-plus**（DashScope 兼容模式） | 友好提示 + **Mock** |
-| 海外 | 预留 gemini / gpt | 暂用 Mock |
+真实分析失败时不会自动变成 Mock。示例固定且显式标注。年龄和性别不改变分数。评分是产品呈现规则，没有临床测量含义。
 
-输出对齐：七维 + 倾向 + report sections（overview / details / zone_tips / plan / products / notes）。
+当前产品目录是中国地区的有限初始集合，防晒型号资料尚未齐全，因此防晒步骤保留而具体候选暂缺；海外目录与真实海外引擎未接入。付款页是功能预览，没有扣款，也没有服务端付费鉴权。
 
-### 付费规则（代码层）
+安装时 npm 报告 13 个 moderate 依赖审计项；未执行可能破坏 Expo 兼容性的 `audit fix --force`。正式发布前应单独处理依赖审计与原生平台验收。
 
-- `runAnalysis()` 每次将 `unlocked` 重置为 `false`
-- 免费 / 付费结果页**不提供「再测一次」按钮**
-- 「结束并回到首页」会 `resetSession()`；再次分析需重新付费
-
-## 免责声明
-
-外观肤况评估与护肤参考，不能替代医疗建议。非医疗诊断，无任何效果承诺。
-
-## License
-
-见仓库 `LICENSE`。
+外观评估与护肤参考，不能替代医疗建议。

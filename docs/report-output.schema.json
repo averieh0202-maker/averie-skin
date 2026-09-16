@@ -1,0 +1,2342 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Averie Skin 3.0 application report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "disclaimer",
+    "analysis_status",
+    "meta",
+    "quality_note",
+    "skin_score",
+    "skin_type",
+    "skin_tendency",
+    "perception_scores",
+    "summary_free",
+    "report_paid",
+    "routine_paid",
+    "products_paid",
+    "preferences"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "3.0"
+    },
+    "disclaimer": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "analysis_status": {
+      "enum": [
+        "complete",
+        "partial",
+        "insufficient"
+      ]
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "engine",
+        "model_id",
+        "market",
+        "analyzed_at",
+        "age_input",
+        "gender_input"
+      ],
+      "properties": {
+        "engine": {
+          "enum": [
+            "mock",
+            "qwen",
+            "llm"
+          ]
+        },
+        "model_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "market": {
+          "enum": [
+            "cn",
+            "overseas"
+          ]
+        },
+        "analyzed_at": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "age_input": {
+          "type": "integer",
+          "minimum": 13,
+          "maximum": 99
+        },
+        "gender_input": {
+          "enum": [
+            "female",
+            "male",
+            "unspecified"
+          ]
+        }
+      }
+    },
+    "quality_note": {
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 120
+    },
+    "skin_score": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "tier_id",
+        "tier_name",
+        "tier_name_en"
+      ],
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tier_id": {
+          "enum": [
+            "renew",
+            "repair",
+            "steady",
+            "glow",
+            "porcelain",
+            null
+          ]
+        },
+        "tier_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 30
+        },
+        "tier_name_en": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
+        }
+      }
+    },
+    "skin_type": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "label_zh",
+        "explanation"
+      ],
+      "properties": {
+        "label": {
+          "enum": [
+            "oil_prone",
+            "dry_prone",
+            "combination_prone",
+            "balanced_prone",
+            "unclear"
+          ]
+        },
+        "label_zh": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 30
+        },
+        "explanation": {
+          "type": "string",
+          "minLength": 12,
+          "maxLength": 100
+        }
+      }
+    },
+    "skin_tendency": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 30
+    },
+    "perception_scores": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "prefixItems": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "key",
+            "label_zh",
+            "value",
+            "status",
+            "observation",
+            "detail",
+            "action",
+            "regions"
+          ],
+          "properties": {
+            "key": {
+              "const": "radiance"
+            },
+            "label_zh": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "status": {
+              "enum": [
+                "表现不错",
+                "可以留意",
+                "优先关注",
+                "暂无法判断"
+              ]
+            },
+            "observation": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 60
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 30,
+              "maxLength": 180
+            },
+            "action": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 90
+            },
+            "regions": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "forehead",
+                  "nose",
+                  "cheeks",
+                  "chin",
+                  "periocular",
+                  "perioral"
+                ]
+              },
+              "minItems": 0,
+              "maxItems": 6,
+              "uniqueItems": true
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "key",
+            "label_zh",
+            "value",
+            "status",
+            "observation",
+            "detail",
+            "action",
+            "regions"
+          ],
+          "properties": {
+            "key": {
+              "const": "oiliness"
+            },
+            "label_zh": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "status": {
+              "enum": [
+                "表现不错",
+                "可以留意",
+                "优先关注",
+                "暂无法判断"
+              ]
+            },
+            "observation": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 60
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 30,
+              "maxLength": 180
+            },
+            "action": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 90
+            },
+            "regions": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "forehead",
+                  "nose",
+                  "cheeks",
+                  "chin",
+                  "periocular",
+                  "perioral"
+                ]
+              },
+              "minItems": 0,
+              "maxItems": 6,
+              "uniqueItems": true
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "key",
+            "label_zh",
+            "value",
+            "status",
+            "observation",
+            "detail",
+            "action",
+            "regions"
+          ],
+          "properties": {
+            "key": {
+              "const": "pores"
+            },
+            "label_zh": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "status": {
+              "enum": [
+                "表现不错",
+                "可以留意",
+                "优先关注",
+                "暂无法判断"
+              ]
+            },
+            "observation": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 60
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 30,
+              "maxLength": 180
+            },
+            "action": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 90
+            },
+            "regions": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "forehead",
+                  "nose",
+                  "cheeks",
+                  "chin",
+                  "periocular",
+                  "perioral"
+                ]
+              },
+              "minItems": 0,
+              "maxItems": 6,
+              "uniqueItems": true
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "key",
+            "label_zh",
+            "value",
+            "status",
+            "observation",
+            "detail",
+            "action",
+            "regions"
+          ],
+          "properties": {
+            "key": {
+              "const": "texture"
+            },
+            "label_zh": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "status": {
+              "enum": [
+                "表现不错",
+                "可以留意",
+                "优先关注",
+                "暂无法判断"
+              ]
+            },
+            "observation": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 60
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 30,
+              "maxLength": 180
+            },
+            "action": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 90
+            },
+            "regions": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "forehead",
+                  "nose",
+                  "cheeks",
+                  "chin",
+                  "periocular",
+                  "perioral"
+                ]
+              },
+              "minItems": 0,
+              "maxItems": 6,
+              "uniqueItems": true
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "key",
+            "label_zh",
+            "value",
+            "status",
+            "observation",
+            "detail",
+            "action",
+            "regions"
+          ],
+          "properties": {
+            "key": {
+              "const": "tone_evenness"
+            },
+            "label_zh": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "status": {
+              "enum": [
+                "表现不错",
+                "可以留意",
+                "优先关注",
+                "暂无法判断"
+              ]
+            },
+            "observation": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 60
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 30,
+              "maxLength": 180
+            },
+            "action": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 90
+            },
+            "regions": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "forehead",
+                  "nose",
+                  "cheeks",
+                  "chin",
+                  "periocular",
+                  "perioral"
+                ]
+              },
+              "minItems": 0,
+              "maxItems": 6,
+              "uniqueItems": true
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "key",
+            "label_zh",
+            "value",
+            "status",
+            "observation",
+            "detail",
+            "action",
+            "regions"
+          ],
+          "properties": {
+            "key": {
+              "const": "fine_lines"
+            },
+            "label_zh": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "status": {
+              "enum": [
+                "表现不错",
+                "可以留意",
+                "优先关注",
+                "暂无法判断"
+              ]
+            },
+            "observation": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 60
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 30,
+              "maxLength": 180
+            },
+            "action": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 90
+            },
+            "regions": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "forehead",
+                  "nose",
+                  "cheeks",
+                  "chin",
+                  "periocular",
+                  "perioral"
+                ]
+              },
+              "minItems": 0,
+              "maxItems": 6,
+              "uniqueItems": true
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "key",
+            "label_zh",
+            "value",
+            "status",
+            "observation",
+            "detail",
+            "action",
+            "regions"
+          ],
+          "properties": {
+            "key": {
+              "const": "redness"
+            },
+            "label_zh": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "status": {
+              "enum": [
+                "表现不错",
+                "可以留意",
+                "优先关注",
+                "暂无法判断"
+              ]
+            },
+            "observation": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 60
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 30,
+              "maxLength": 180
+            },
+            "action": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 90
+            },
+            "regions": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "forehead",
+                  "nose",
+                  "cheeks",
+                  "chin",
+                  "periocular",
+                  "perioral"
+                ]
+              },
+              "minItems": 0,
+              "maxItems": 6,
+              "uniqueItems": true
+            }
+          }
+        }
+      ],
+      "items": false
+    },
+    "summary_free": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "headline",
+        "priorities"
+      ],
+      "properties": {
+        "headline": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "priorities": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "radiance",
+              "oiliness",
+              "pores",
+              "texture",
+              "tone_evenness",
+              "fine_lines",
+              "redness"
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 2,
+          "uniqueItems": true
+        }
+      }
+    },
+    "report_paid": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "full_summary",
+        "zone_notes"
+      ],
+      "properties": {
+        "full_summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "zone_notes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "zone",
+              "zone_zh",
+              "note"
+            ],
+            "properties": {
+              "zone": {
+                "enum": [
+                  "forehead",
+                  "nose",
+                  "cheeks",
+                  "chin",
+                  "periocular",
+                  "perioral"
+                ]
+              },
+              "zone_zh": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 30
+              },
+              "note": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              }
+            }
+          },
+          "minItems": 0,
+          "maxItems": 6
+        }
+      }
+    },
+    "routine_paid": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "duration_days",
+        "am",
+        "pm",
+        "phases",
+        "avoid"
+      ],
+      "properties": {
+        "duration_days": {
+          "const": 14
+        },
+        "am": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "step",
+              "action",
+              "purpose",
+              "category"
+            ],
+            "properties": {
+              "step": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10
+              },
+              "action": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "purpose": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "category": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "cleanser",
+                      "lotion",
+                      "cream",
+                      "serum",
+                      "sunscreen",
+                      "toner"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "minItems": 1,
+          "maxItems": 6
+        },
+        "pm": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "step",
+              "action",
+              "purpose",
+              "category"
+            ],
+            "properties": {
+              "step": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10
+              },
+              "action": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "purpose": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "category": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "cleanser",
+                      "lotion",
+                      "cream",
+                      "serum",
+                      "sunscreen",
+                      "toner"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "minItems": 1,
+          "maxItems": 6
+        },
+        "phases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "days",
+              "title",
+              "instruction"
+            ],
+            "properties": {
+              "days": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "instruction": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              }
+            }
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "avoid": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "minItems": 1,
+          "maxItems": 8
+        }
+      }
+    },
+    "products_paid": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decisions",
+        "note"
+      ],
+      "properties": {
+        "decisions": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "prefixItems": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "category",
+                "title",
+                "status",
+                "reason",
+                "related_dimensions",
+                "candidates",
+                "selection_note"
+              ],
+              "properties": {
+                "category": {
+                  "const": "cleanser"
+                },
+                "title": {
+                  "const": "洁面"
+                },
+                "status": {
+                  "enum": [
+                    "recommended",
+                    "optional",
+                    "not_needed",
+                    "hold"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                },
+                "related_dimensions": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "radiance",
+                      "oiliness",
+                      "pores",
+                      "texture",
+                      "tone_evenness",
+                      "fine_lines",
+                      "redness"
+                    ]
+                  },
+                  "minItems": 0,
+                  "maxItems": 7,
+                  "uniqueItems": true
+                },
+                "candidates": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "id",
+                      "category",
+                      "name",
+                      "model",
+                      "region",
+                      "ingredients",
+                      "texture",
+                      "usage",
+                      "caution",
+                      "source_url",
+                      "checked_on",
+                      "mapped_concerns",
+                      "reasons"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      },
+                      "category": {
+                        "const": "cleanser"
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "model": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "region": {
+                        "enum": [
+                          "CN",
+                          "US"
+                        ]
+                      },
+                      "ingredients": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "name",
+                            "role"
+                          ],
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 80
+                            },
+                            "role": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 200
+                            }
+                          }
+                        },
+                        "minItems": 2,
+                        "maxItems": 4
+                      },
+                      "texture": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500
+                      },
+                      "usage": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500
+                      },
+                      "caution": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 800
+                      },
+                      "source_url": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 1000,
+                        "pattern": "^https://",
+                        "readOnly": true,
+                        "description": "内部核对来源，不在用户产品卡渲染为链接"
+                      },
+                      "checked_on": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 10,
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      "mapped_concerns": {
+                        "type": "array",
+                        "items": {
+                          "enum": [
+                            "radiance",
+                            "oiliness",
+                            "pores",
+                            "texture",
+                            "tone_evenness",
+                            "fine_lines",
+                            "redness"
+                          ]
+                        },
+                        "minItems": 0,
+                        "maxItems": 7,
+                        "uniqueItems": true
+                      },
+                      "reasons": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 500
+                        },
+                        "minItems": 3,
+                        "maxItems": 5
+                      }
+                    }
+                  },
+                  "minItems": 0,
+                  "maxItems": 2
+                },
+                "selection_note": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "enum": [
+                          "hold",
+                          "not_needed"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ]
+                  },
+                  "then": {
+                    "properties": {
+                      "candidates": {
+                        "maxItems": 0
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "category",
+                "title",
+                "status",
+                "reason",
+                "related_dimensions",
+                "candidates",
+                "selection_note"
+              ],
+              "properties": {
+                "category": {
+                  "const": "lotion"
+                },
+                "title": {
+                  "const": "保湿乳"
+                },
+                "status": {
+                  "enum": [
+                    "recommended",
+                    "optional",
+                    "not_needed",
+                    "hold"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                },
+                "related_dimensions": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "radiance",
+                      "oiliness",
+                      "pores",
+                      "texture",
+                      "tone_evenness",
+                      "fine_lines",
+                      "redness"
+                    ]
+                  },
+                  "minItems": 0,
+                  "maxItems": 7,
+                  "uniqueItems": true
+                },
+                "candidates": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "id",
+                      "category",
+                      "name",
+                      "model",
+                      "region",
+                      "ingredients",
+                      "texture",
+                      "usage",
+                      "caution",
+                      "source_url",
+                      "checked_on",
+                      "mapped_concerns",
+                      "reasons"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      },
+                      "category": {
+                        "const": "lotion"
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "model": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "region": {
+                        "enum": [
+                          "CN",
+                          "US"
+                        ]
+                      },
+                      "ingredients": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "name",
+                            "role"
+                          ],
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 80
+                            },
+                            "role": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 200
+                            }
+                          }
+                        },
+                        "minItems": 2,
+                        "maxItems": 4
+                      },
+                      "texture": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500
+                      },
+                      "usage": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500
+                      },
+                      "caution": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 800
+                      },
+                      "source_url": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 1000,
+                        "pattern": "^https://",
+                        "readOnly": true,
+                        "description": "内部核对来源，不在用户产品卡渲染为链接"
+                      },
+                      "checked_on": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 10,
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      "mapped_concerns": {
+                        "type": "array",
+                        "items": {
+                          "enum": [
+                            "radiance",
+                            "oiliness",
+                            "pores",
+                            "texture",
+                            "tone_evenness",
+                            "fine_lines",
+                            "redness"
+                          ]
+                        },
+                        "minItems": 0,
+                        "maxItems": 7,
+                        "uniqueItems": true
+                      },
+                      "reasons": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 500
+                        },
+                        "minItems": 3,
+                        "maxItems": 5
+                      }
+                    }
+                  },
+                  "minItems": 0,
+                  "maxItems": 2
+                },
+                "selection_note": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "enum": [
+                          "hold",
+                          "not_needed"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ]
+                  },
+                  "then": {
+                    "properties": {
+                      "candidates": {
+                        "maxItems": 0
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "category",
+                "title",
+                "status",
+                "reason",
+                "related_dimensions",
+                "candidates",
+                "selection_note"
+              ],
+              "properties": {
+                "category": {
+                  "const": "cream"
+                },
+                "title": {
+                  "const": "面霜"
+                },
+                "status": {
+                  "enum": [
+                    "recommended",
+                    "optional",
+                    "not_needed",
+                    "hold"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                },
+                "related_dimensions": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "radiance",
+                      "oiliness",
+                      "pores",
+                      "texture",
+                      "tone_evenness",
+                      "fine_lines",
+                      "redness"
+                    ]
+                  },
+                  "minItems": 0,
+                  "maxItems": 7,
+                  "uniqueItems": true
+                },
+                "candidates": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "id",
+                      "category",
+                      "name",
+                      "model",
+                      "region",
+                      "ingredients",
+                      "texture",
+                      "usage",
+                      "caution",
+                      "source_url",
+                      "checked_on",
+                      "mapped_concerns",
+                      "reasons"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      },
+                      "category": {
+                        "const": "cream"
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "model": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "region": {
+                        "enum": [
+                          "CN",
+                          "US"
+                        ]
+                      },
+                      "ingredients": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "name",
+                            "role"
+                          ],
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 80
+                            },
+                            "role": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 200
+                            }
+                          }
+                        },
+                        "minItems": 2,
+                        "maxItems": 4
+                      },
+                      "texture": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500
+                      },
+                      "usage": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500
+                      },
+                      "caution": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 800
+                      },
+                      "source_url": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 1000,
+                        "pattern": "^https://",
+                        "readOnly": true,
+                        "description": "内部核对来源，不在用户产品卡渲染为链接"
+                      },
+                      "checked_on": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 10,
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      "mapped_concerns": {
+                        "type": "array",
+                        "items": {
+                          "enum": [
+                            "radiance",
+                            "oiliness",
+                            "pores",
+                            "texture",
+                            "tone_evenness",
+                            "fine_lines",
+                            "redness"
+                          ]
+                        },
+                        "minItems": 0,
+                        "maxItems": 7,
+                        "uniqueItems": true
+                      },
+                      "reasons": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 500
+                        },
+                        "minItems": 3,
+                        "maxItems": 5
+                      }
+                    }
+                  },
+                  "minItems": 0,
+                  "maxItems": 2
+                },
+                "selection_note": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "enum": [
+                          "hold",
+                          "not_needed"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ]
+                  },
+                  "then": {
+                    "properties": {
+                      "candidates": {
+                        "maxItems": 0
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "category",
+                "title",
+                "status",
+                "reason",
+                "related_dimensions",
+                "candidates",
+                "selection_note"
+              ],
+              "properties": {
+                "category": {
+                  "const": "serum"
+                },
+                "title": {
+                  "const": "精华"
+                },
+                "status": {
+                  "enum": [
+                    "recommended",
+                    "optional",
+                    "not_needed",
+                    "hold"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                },
+                "related_dimensions": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "radiance",
+                      "oiliness",
+                      "pores",
+                      "texture",
+                      "tone_evenness",
+                      "fine_lines",
+                      "redness"
+                    ]
+                  },
+                  "minItems": 0,
+                  "maxItems": 7,
+                  "uniqueItems": true
+                },
+                "candidates": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "id",
+                      "category",
+                      "name",
+                      "model",
+                      "region",
+                      "ingredients",
+                      "texture",
+                      "usage",
+                      "caution",
+                      "source_url",
+                      "checked_on",
+                      "mapped_concerns",
+                      "reasons"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      },
+                      "category": {
+                        "const": "serum"
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "model": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "region": {
+                        "enum": [
+                          "CN",
+                          "US"
+                        ]
+                      },
+                      "ingredients": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "name",
+                            "role"
+                          ],
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 80
+                            },
+                            "role": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 200
+                            }
+                          }
+                        },
+                        "minItems": 2,
+                        "maxItems": 4
+                      },
+                      "texture": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500
+                      },
+                      "usage": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500
+                      },
+                      "caution": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 800
+                      },
+                      "source_url": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 1000,
+                        "pattern": "^https://",
+                        "readOnly": true,
+                        "description": "内部核对来源，不在用户产品卡渲染为链接"
+                      },
+                      "checked_on": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 10,
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      "mapped_concerns": {
+                        "type": "array",
+                        "items": {
+                          "enum": [
+                            "radiance",
+                            "oiliness",
+                            "pores",
+                            "texture",
+                            "tone_evenness",
+                            "fine_lines",
+                            "redness"
+                          ]
+                        },
+                        "minItems": 0,
+                        "maxItems": 7,
+                        "uniqueItems": true
+                      },
+                      "reasons": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 500
+                        },
+                        "minItems": 3,
+                        "maxItems": 5
+                      }
+                    }
+                  },
+                  "minItems": 0,
+                  "maxItems": 2
+                },
+                "selection_note": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "enum": [
+                          "hold",
+                          "not_needed"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ]
+                  },
+                  "then": {
+                    "properties": {
+                      "candidates": {
+                        "maxItems": 0
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "category",
+                "title",
+                "status",
+                "reason",
+                "related_dimensions",
+                "candidates",
+                "selection_note"
+              ],
+              "properties": {
+                "category": {
+                  "const": "sunscreen"
+                },
+                "title": {
+                  "const": "防晒"
+                },
+                "status": {
+                  "enum": [
+                    "recommended",
+                    "optional",
+                    "not_needed",
+                    "hold"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                },
+                "related_dimensions": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "radiance",
+                      "oiliness",
+                      "pores",
+                      "texture",
+                      "tone_evenness",
+                      "fine_lines",
+                      "redness"
+                    ]
+                  },
+                  "minItems": 0,
+                  "maxItems": 7,
+                  "uniqueItems": true
+                },
+                "candidates": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "id",
+                      "category",
+                      "name",
+                      "model",
+                      "region",
+                      "ingredients",
+                      "texture",
+                      "usage",
+                      "caution",
+                      "source_url",
+                      "checked_on",
+                      "mapped_concerns",
+                      "reasons"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      },
+                      "category": {
+                        "const": "sunscreen"
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "model": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "region": {
+                        "enum": [
+                          "CN",
+                          "US"
+                        ]
+                      },
+                      "ingredients": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "name",
+                            "role"
+                          ],
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 80
+                            },
+                            "role": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 200
+                            }
+                          }
+                        },
+                        "minItems": 2,
+                        "maxItems": 4
+                      },
+                      "texture": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500
+                      },
+                      "usage": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500
+                      },
+                      "caution": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 800
+                      },
+                      "source_url": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 1000,
+                        "pattern": "^https://",
+                        "readOnly": true,
+                        "description": "内部核对来源，不在用户产品卡渲染为链接"
+                      },
+                      "checked_on": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 10,
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      "mapped_concerns": {
+                        "type": "array",
+                        "items": {
+                          "enum": [
+                            "radiance",
+                            "oiliness",
+                            "pores",
+                            "texture",
+                            "tone_evenness",
+                            "fine_lines",
+                            "redness"
+                          ]
+                        },
+                        "minItems": 0,
+                        "maxItems": 7,
+                        "uniqueItems": true
+                      },
+                      "reasons": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 500
+                        },
+                        "minItems": 3,
+                        "maxItems": 5
+                      }
+                    }
+                  },
+                  "minItems": 0,
+                  "maxItems": 2
+                },
+                "selection_note": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "enum": [
+                          "hold",
+                          "not_needed"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ]
+                  },
+                  "then": {
+                    "properties": {
+                      "candidates": {
+                        "maxItems": 0
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "category",
+                "title",
+                "status",
+                "reason",
+                "related_dimensions",
+                "candidates",
+                "selection_note"
+              ],
+              "properties": {
+                "category": {
+                  "const": "toner"
+                },
+                "title": {
+                  "const": "爽肤水"
+                },
+                "status": {
+                  "enum": [
+                    "recommended",
+                    "optional",
+                    "not_needed",
+                    "hold"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                },
+                "related_dimensions": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "radiance",
+                      "oiliness",
+                      "pores",
+                      "texture",
+                      "tone_evenness",
+                      "fine_lines",
+                      "redness"
+                    ]
+                  },
+                  "minItems": 0,
+                  "maxItems": 7,
+                  "uniqueItems": true
+                },
+                "candidates": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "id",
+                      "category",
+                      "name",
+                      "model",
+                      "region",
+                      "ingredients",
+                      "texture",
+                      "usage",
+                      "caution",
+                      "source_url",
+                      "checked_on",
+                      "mapped_concerns",
+                      "reasons"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      },
+                      "category": {
+                        "const": "toner"
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "model": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "region": {
+                        "enum": [
+                          "CN",
+                          "US"
+                        ]
+                      },
+                      "ingredients": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "name",
+                            "role"
+                          ],
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 80
+                            },
+                            "role": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 200
+                            }
+                          }
+                        },
+                        "minItems": 2,
+                        "maxItems": 4
+                      },
+                      "texture": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500
+                      },
+                      "usage": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500
+                      },
+                      "caution": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 800
+                      },
+                      "source_url": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 1000,
+                        "pattern": "^https://",
+                        "readOnly": true,
+                        "description": "内部核对来源，不在用户产品卡渲染为链接"
+                      },
+                      "checked_on": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 10,
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      "mapped_concerns": {
+                        "type": "array",
+                        "items": {
+                          "enum": [
+                            "radiance",
+                            "oiliness",
+                            "pores",
+                            "texture",
+                            "tone_evenness",
+                            "fine_lines",
+                            "redness"
+                          ]
+                        },
+                        "minItems": 0,
+                        "maxItems": 7,
+                        "uniqueItems": true
+                      },
+                      "reasons": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 500
+                        },
+                        "minItems": 3,
+                        "maxItems": 5
+                      }
+                    }
+                  },
+                  "minItems": 0,
+                  "maxItems": 2
+                },
+                "selection_note": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "enum": [
+                          "hold",
+                          "not_needed"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ]
+                  },
+                  "then": {
+                    "properties": {
+                      "candidates": {
+                        "maxItems": 0
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "items": false
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      }
+    },
+    "preferences": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "goals",
+        "tightness",
+        "discomfort"
+      ],
+      "properties": {
+        "goals": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "oiliness",
+              "pores",
+              "dryness",
+              "tone",
+              "fine_lines",
+              "simple"
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 2,
+          "uniqueItems": true
+        },
+        "tightness": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        },
+        "discomfort": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "analysis_status": {
+            "const": "complete"
+          }
+        },
+        "required": [
+          "analysis_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "skin_score": {
+            "properties": {
+              "value": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100
+              }
+            }
+          },
+          "perception_scores": {
+            "items": {
+              "properties": {
+                "value": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "skin_score": {
+            "properties": {
+              "value": {
+                "type": "null"
+              }
+            }
+          },
+          "skin_type": {
+            "properties": {
+              "label": {
+                "const": "unclear"
+              }
+            }
+          },
+          "products_paid": {
+            "properties": {
+              "decisions": {
+                "items": {
+                  "properties": {
+                    "candidates": {
+                      "maxItems": 0
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

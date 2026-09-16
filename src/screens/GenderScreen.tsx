@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Text, Pressable } from 'react-native';
+import { View, StyleSheet, Text, Pressable, ScrollView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { useSession } from '../context/SessionContext';
@@ -7,6 +7,8 @@ import { AnalyzerEngine, Gender } from '../types/analysis';
 import {
   OptionCard,
   PrimaryButton,
+  SecondaryButton,
+  AccordionSection,
   Screen,
   Subtitle,
   Title,
@@ -19,19 +21,19 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Gender'>;
 const OPTIONS: Array<{ value: Gender; label: string; emoji: string }> = [
   { value: 'female', label: '女', emoji: '♀' },
   { value: 'male', label: '男', emoji: '♂' },
-  { value: 'unspecified', label: '不愿说明', emoji: '·' },
+  { value: 'unspecified', label: '不愿说明', emoji: '' },
 ];
 
-const ENGINE_OPTS: Array<{ value: AnalyzerEngine; label: string; hint: string }> =
-  [
-    { value: 'mock', label: 'Mock', hint: '本地演示' },
-    { value: 'qwen', label: 'Qwen', hint: '百炼视觉' },
-    { value: 'auto', label: 'Auto', hint: '有 Key 用 Qwen' },
-  ];
+const ENGINE_OPTS: Array<{ value: AnalyzerEngine; label: string; hint: string }> = [
+  { value: 'mock', label: 'Mock', hint: '本地演示' },
+  { value: 'qwen', label: 'Qwen', hint: '百炼视觉' },
+  { value: 'auto', label: 'Auto', hint: '有 Key 用 Qwen' },
+];
 
 export function GenderScreen({ navigation }: Props) {
   const {
     gender,
+    viewDemo,
     setGender,
     analyzerEngine,
     setAnalyzerEngine,
@@ -41,64 +43,79 @@ export function GenderScreen({ navigation }: Props) {
 
   return (
     <Screen>
-      <Text style={styles.brand}>Averie Skin</Text>
-      <View style={styles.progress}>
-        <View style={[styles.dot, styles.dotActive]} />
-        <View style={styles.dot} />
-        <View style={styles.dot} />
-      </View>
-      <Title>你的性别</Title>
-      <Subtitle>仅用于外观评估的先验参考，不会单独决定分数。</Subtitle>
-
-      <View style={styles.options}>
-        {OPTIONS.map((o) => (
-          <OptionCard
-            key={o.value}
-            label={o.label}
-            emoji={o.emoji}
-            selected={selected === o.value}
-            onPress={() => setSelected(o.value)}
-          />
-        ))}
-      </View>
-
-      <View style={styles.engineBlock}>
-        <Text style={styles.engineTitle}>分析引擎（开发/测试）</Text>
-        <View style={styles.engineRow}>
-          {ENGINE_OPTS.map((e) => {
-            const on = analyzerEngine === e.value;
-            return (
-              <Pressable
-                key={e.value}
-                onPress={() => setAnalyzerEngine(e.value)}
-                style={[styles.engineChip, on && styles.engineChipOn]}
-              >
-                <Text style={[styles.engineLabel, on && styles.engineLabelOn]}>
-                  {e.label}
-                </Text>
-                <Text style={styles.engineHint}>{e.hint}</Text>
-              </Pressable>
-            );
-          })}
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 12 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.brand}>Averie Skin</Text>
+        <View style={styles.progress}>
+          <View style={[styles.dot, styles.dotActive]} />
+          <View style={styles.dot} />
+          <View style={styles.dot} />
         </View>
-        <Text style={styles.engineNote}>
-          {hasDashScopeKey
-            ? '已检测到本地 DashScope Key。选 Qwen 后自拍将走 qwen3-vl-plus；失败会友好提示并回退 Mock。'
-            : '未检测到 Key时 Qwen 会回退 Mock。在项目根目录 .env 写入 EXPO_PUBLIC_DASHSCOPE_API_KEY 后重启 expo。'}
-        </Text>
-      </View>
+        <Title>你的性别</Title>
+        <Subtitle>用于基础信息，不会根据性别直接加减分。</Subtitle>
 
-      <View style={styles.spacer} />
-      <PrimaryButton
-        label="下一步"
-        disabled={!selected}
-        onPress={() => {
-          if (!selected) return;
-          setGender(selected);
-          navigation.navigate('Age');
-        }}
-      />
-      <DisclaimerFooter text={DISCLAIMER} />
+        <View style={styles.options}>
+          {OPTIONS.map((o) => (
+            <OptionCard
+              key={o.value}
+              label={o.label}
+              emoji={o.emoji}
+              selected={selected === o.value}
+              onPress={() => setSelected(o.value)}
+            />
+          ))}
+        </View>
+
+        <AccordionSection title="分析设置">
+          <Text style={styles.engineTitle}>分析引擎（开发/测试）</Text>
+          <View style={styles.engineRow}>
+            {ENGINE_OPTS.map((e) => {
+              const on = analyzerEngine === e.value;
+              return (
+                <Pressable
+                  key={e.value}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: on }}
+                  onPress={() => setAnalyzerEngine(e.value)}
+                  style={[styles.engineChip, on && styles.engineChipOn]}
+                >
+                  <Text style={[styles.engineLabel, on && styles.engineLabelOn]}>
+                    {e.label}
+                  </Text>
+                  <Text style={styles.engineHint}>{e.hint}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <Text style={styles.engineNote}>
+            {hasDashScopeKey
+              ? '已检测到本地 DashScope Key。选 Qwen 后自拍将走 qwen3-vl-plus；未通过检查时会提示重试，不会改用示例冒充。'
+              : '真实分析尚未配置，可以先查看示例报告。开发时在本地配置 Key 后重启。'}
+          </Text>
+        </AccordionSection>
+
+        <View style={styles.spacer} />
+        <PrimaryButton
+          label="下一步"
+          disabled={!selected}
+          onPress={() => {
+            if (!selected) return;
+            setGender(selected);
+            navigation.navigate('Age');
+          }}
+        />
+        <View style={{ height: 12 }} />
+        <SecondaryButton
+          label="先看一份示例报告"
+          onPress={() => {
+            viewDemo();
+            navigation.navigate('FreeResult');
+          }}
+        />
+        <DisclaimerFooter text={DISCLAIMER} />
+      </ScrollView>
     </Screen>
   );
 }
@@ -107,7 +124,7 @@ const styles = StyleSheet.create({
   brand: {
     fontSize: 11,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.4)',
+    color: colors.textMuted,
     letterSpacing: 2.5,
     textTransform: 'uppercase',
     marginBottom: 20,
@@ -122,9 +139,9 @@ const styles = StyleSheet.create({
     width: 28,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: colors.border,
   },
-  dotActive: { backgroundColor: '#E8A0B0' },
+  dotActive: { backgroundColor: colors.primary },
   options: { marginTop: 4 },
   spacer: { flex: 1, minHeight: 16 },
   engineBlock: {
@@ -153,7 +170,7 @@ const styles = StyleSheet.create({
   },
   engineChipOn: {
     borderColor: colors.primary,
-    backgroundColor: 'rgba(232,160,176,0.12)',
+    backgroundColor: '#E8EDDF',
   },
   engineLabel: { color: colors.textSecondary, fontWeight: '700', fontSize: 13 },
   engineLabelOn: { color: colors.primary },

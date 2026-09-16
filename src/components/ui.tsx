@@ -19,7 +19,10 @@ export function Screen({
   style?: ViewStyle;
 }) {
   return (
-    <SafeAreaView style={[styles.screen, style]} edges={['top', 'bottom', 'left', 'right']}>
+    <SafeAreaView
+      style={[styles.screen, style]}
+      edges={['top', 'bottom', 'left', 'right']}
+    >
       {children}
     </SafeAreaView>
   );
@@ -46,7 +49,9 @@ export function PrimaryButton({
 }) {
   return (
     <Pressable
+      accessibilityRole="button"
       onPress={onPress}
+      accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }}
       disabled={disabled || loading}
       style={({ pressed }) => [
         styles.primaryBtn,
@@ -55,7 +60,7 @@ export function PrimaryButton({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color="#0C0C0E" />
+        <ActivityIndicator color="#FFFFFF" />
       ) : (
         <Text style={styles.primaryBtnText}>{label}</Text>
       )}
@@ -74,7 +79,9 @@ export function SecondaryButton({
 }) {
   return (
     <Pressable
+      accessibilityRole="button"
       onPress={onPress}
+      accessibilityState={{ disabled: !!disabled }}
       disabled={disabled}
       style={({ pressed }) => [
         styles.secondaryBtn,
@@ -101,6 +108,8 @@ export function OptionCard({
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="radio"
+      accessibilityState={{ checked: selected }}
       style={({ pressed }) => [
         styles.optionCard,
         selected && styles.optionSelected,
@@ -163,15 +172,12 @@ export function AccordionSection({
     <View style={styles.sectionCard}>
       <Pressable
         onPress={() => setExpanded((v) => !v)}
-        style={({ pressed }) => [
-          styles.accordionHeader,
-          pressed && styles.btnPressed,
-        ]}
+        style={({ pressed }) => [styles.accordionHeader, pressed && styles.btnPressed]}
         accessibilityRole="button"
         accessibilityState={{ expanded }}
       >
         <Text style={styles.sectionTitleCompact}>{title}</Text>
-        <Text style={styles.accordionChevron}>{expanded ? '▾' : '▸'}</Text>
+        <Text style={styles.accordionChevron}>{expanded ? '−' : '+'}</Text>
       </Pressable>
       {expanded ? (
         <View style={styles.accordionBody}>
@@ -212,7 +218,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryBtnText: {
-    color: '#0C0C0E',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.2,
@@ -222,12 +228,12 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: colors.border,
     backgroundColor: colors.surface,
   },
   secondaryBtnText: {
     color: colors.text,
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: '600',
   },
   btnDisabled: { opacity: 0.4 },
@@ -245,7 +251,7 @@ const styles = StyleSheet.create({
   },
   optionSelected: {
     borderColor: colors.primary,
-    backgroundColor: 'rgba(232,160,176,0.12)',
+    backgroundColor: '#EDF0E8',
   },
   optionEmoji: { fontSize: 22, marginRight: 14, color: colors.primary },
   optionLabel: {
@@ -276,25 +282,26 @@ const styles = StyleSheet.create({
   sectionCard: {
     backgroundColor: colors.surface,
     borderRadius: 20,
-    padding: 18,
+    padding: 22,
     marginBottom: 14,
     borderWidth: 1,
     borderColor: colors.border,
   },
   sectionTitle: {
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: '700',
     color: colors.text,
     marginBottom: 14,
     letterSpacing: 0.2,
   },
   accordionHeader: {
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   sectionTitleCompact: {
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: '700',
     color: colors.text,
     letterSpacing: 0.2,

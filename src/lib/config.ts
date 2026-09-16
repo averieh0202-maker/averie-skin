@@ -42,17 +42,6 @@ export function getEnvDefaultEngine(): AnalyzerEngine {
   return 'mock';
 }
 
-export function resolveEngine(preferred: AnalyzerEngine): 'mock' | 'qwen' {
-  if (preferred === 'mock') return 'mock';
-  if (preferred === 'qwen') {
-    return hasDashScopeKey() ? 'qwen' : 'mock';
-  }
-  // auto
-  if (getAnalyzerMarket() === 'cn' && hasDashScopeKey()) return 'qwen';
-  return 'mock';
-}
-
-export const DASHSCOPE_COMPAT_BASE =
-  'https://dashscope.aliyuncs.com/compatible-mode/v1';
+export const DASHSCOPE_COMPAT_BASE = 'https://dashscope.aliyuncs.com/compatible-mode/v1';
 
 export const QWEN_VL_MODEL = 'qwen3-vl-plus';

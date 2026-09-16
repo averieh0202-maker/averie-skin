@@ -1,445 +1,156 @@
 import React from 'react';
-import { View, StyleSheet, Text, ScrollView } from 'react-native';
+import { View, Text } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { useSession } from '../context/SessionContext';
-import { SecondaryButton, AccordionSection } from '../components/ui';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, DISCLAIMER, tierFromScore } from '../theme/tiers';
+import { AccordionSection, SecondaryButton } from '../components/ui';
 import {
-  DIMENSION_META,
-  EVIDENCE_MAP_TIP,
-  PRODUCTS_LIST_GUIDE,
-  REPORT_SECTION_LEADS,
-  UNLOCK_COPY,
-} from '../lib/copyPack';
-
+  ReportPage,
+  EngineNote,
+  MetricRow,
+  CandidateCard,
+  s,
+} from '../components/report';
+import { DECISION_LABELS } from '../lib/copyPack';
+import { colors } from '../theme/tiers';
 type Props = NativeStackScreenProps<RootStackParamList, 'PaidReport'>;
-
 export function PaidReportScreen({ navigation }: Props) {
-  const { result, unlocked, resetSession } = useSession();
-
-  if (!result || !unlocked) {
+  const { result, unlocked } = useSession();
+  if (!result || !unlocked || result.analysis_status !== 'complete')
     return (
-      <View style={styles.fallback}>
-        <Text style={styles.fallbackText}>请先解锁本次报告</Text>
+      <ReportPage label="护理方案">
+        <Text style={s.title}>请先查看本次结果</Text>
         <SecondaryButton
-          label="去解锁"
-          onPress={() => navigation.replace('Paywall')}
+          label="返回结果"
+          onPress={() => navigation.navigate('FreeResult')}
+        />
+      </ReportPage>
+    );
+  const decisions = result.products_paid.decisions;
+  return (
+    <ReportPage label="我的护理方案">
+      <EngineNote result={result} />
+      <Text style={s.eyebrow}>从结果到日常</Text>
+      <Text style={[s.title, { marginTop: 8 }]}>护肤有重点，{`\n`}步骤可以少一点。</Text>
+      <Text style={[s.body, { marginTop: 12, marginBottom: 28 }]}>
+        结合这次的皮肤表现，看看先做什么、哪些产品暂时不用加。
+      </Text>
+      <AccordionSection title="这次先做什么" defaultExpanded>
+        <Text style={s.body}>{result.report_paid.full_summary}</Text>
+        {result.summary_free.priorities.map((k) => {
+          const d = result.perception_scores.find((x) => x.key === k)!;
+          return (
+            <View key={k} style={s.actionBox}>
+              <Text style={s.action}>{d.action}</Text>
+            </View>
+          );
+        })}
+      </AccordionSection>
+      <AccordionSection title="7 项结果说明" lead="看看每一项的具体表现和护理建议。">
+        {result.perception_scores.map((d) => (
+          <MetricRow key={d.key} dim={d} detail />
+        ))}
+      </AccordionSection>
+      {result.report_paid.zone_notes.length ? (
+        <AccordionSection title="不同部位怎么照顾">
+          {result.report_paid.zone_notes.map((z) => (
+            <View key={z.zone} style={{ marginBottom: 20 }}>
+              <Text style={[s.subheading, { marginTop: 0 }]}>{z.zone_zh}</Text>
+              <Text style={s.body}>{z.note}</Text>
+            </View>
+          ))}
+        </AccordionSection>
+      ) : null}
+      <AccordionSection
+        title="早晚怎么用"
+        lead="未来 14 天先把基础护理做好，不需要一次换齐。"
+      >
+        {(['am', 'pm'] as const).map((time) => (
+          <View key={time}>
+            <Text style={[s.sectionTitle, { marginTop: 16 }]}>
+              {time === 'am' ? '早晨' : '晚上'}
+            </Text>
+            {result.routine_paid[time].map((step) => (
+              <View
+                key={step.step}
+                style={{ flexDirection: 'row', gap: 14, marginBottom: 20 }}
+              >
+                <Text style={[s.eyebrow, { marginTop: 3 }]}>
+                  {String(step.step).padStart(2, '0')}
+                </Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.metricTitle, { marginBottom: 6 }]}>{step.action}</Text>
+                  <Text style={s.body}>{step.purpose}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        ))}
+        <Text style={s.subheading}>慢慢建立节奏</Text>
+        {result.routine_paid.phases.map((p) => (
+          <View key={p.days} style={{ marginBottom: 20 }}>
+            <Text style={s.eyebrow}>{p.days}</Text>
+            <Text style={[s.metricTitle, { marginVertical: 6 }]}>{p.title}</Text>
+            <Text style={s.body}>{p.instruction}</Text>
+          </View>
+        ))}
+      </AccordionSection>
+      <AccordionSection title="每一类产品，要不要加" lead={result.products_paid.note}>
+        <View
+          style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}
+        >
+          {decisions.map((d) => (
+            <View
+              key={d.category}
+              style={{ padding: 9, backgroundColor: '#EDF0E8', borderRadius: 7 }}
+            >
+              <Text style={s.small}>
+                {d.title} {DECISION_LABELS[d.status]}
+              </Text>
+            </View>
+          ))}
+        </View>
+        {decisions.map((d) => (
+          <View
+            key={d.category}
+            style={{ paddingVertical: 22, borderTopWidth: 1, borderColor: colors.border }}
+          >
+            <View style={s.between}>
+              <Text style={s.sectionTitle}>{d.title}</Text>
+              <Text
+                style={[
+                  s.status,
+                  { color: d.status === 'hold' ? colors.danger : colors.primary },
+                ]}
+              >
+                {DECISION_LABELS[d.status]}
+              </Text>
+            </View>
+            <Text style={s.body}>{d.reason}</Text>
+            <Text style={[s.small, { marginTop: 10 }]}>{d.selection_note}</Text>
+            {d.candidates.map((p, i) => (
+              <CandidateCard key={p.id} item={p} index={i} />
+            ))}
+          </View>
+        ))}
+      </AccordionSection>
+      <AccordionSection title="使用前留意">
+        {result.routine_paid.avoid.map((t) => (
+          <Text key={t} style={[s.body, { marginBottom: 16 }]}>
+            {t}
+          </Text>
+        ))}
+        <Text style={s.body}>
+          未了解你的既往不耐受、孕哺状态和全部在用产品，不据此确认某个配方适合所有情况。已有相关顾虑时先核对标签并咨询专业人士。
+        </Text>
+      </AccordionSection>
+      <View style={{ marginTop: 16 }}>
+        <SecondaryButton
+          label="返回皮肤结果"
+          onPress={() => navigation.navigate('FreeResult')}
         />
       </View>
-    );
-  }
-
-  const tier = tierFromScore(result.skin_score.value);
-  const perception = result.perception_scores;
-  const lifestyle = result.routine_paid.lifestyle_tips ?? [];
-  const leads = REPORT_SECTION_LEADS;
-
-  return (
-    <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={styles.brand}>Averie · 完整报告</Text>
-        <Text style={styles.unlockBanner}>{UNLOCK_COPY}</Text>
-
-        {/* 1. 总览 — default expanded */}
-        <AccordionSection
-          title={leads.report_overview.title}
-          lead={leads.report_overview.lead}
-          defaultExpanded
-        >
-          <Text style={styles.bigScore}>{result.skin_score.value}</Text>
-          <Text style={[styles.tier, { color: tier.accent }]}>
-            {result.skin_score.tier_name} · {result.skin_type.label_zh}
-          </Text>
-          <Text style={styles.tendency}>{result.skin_tendency}</Text>
-          <Text style={styles.summary}>{result.report_paid.full_summary}</Text>
-          {result.concerns.map((c) => (
-            <View key={c.id} style={styles.concern}>
-              <Text style={styles.concernTitle}>{c.label_zh}</Text>
-              <Text style={styles.concernNote}>{c.note}</Text>
-            </View>
-          ))}
-        </AccordionSection>
-
-        {/* 2. 分项详解 */}
-        <AccordionSection
-          title={leads.details.title}
-          lead={leads.details.lead}
-        >
-          <Text style={styles.evidenceTip}>ⓘ {EVIDENCE_MAP_TIP}</Text>
-          {perception.map((p) => {
-            const meta = DIMENSION_META[p.key];
-            return (
-              <View key={p.key} style={styles.percBlock}>
-                <ScoreBar
-                  label={meta?.labelZh ?? p.label_zh}
-                  value={p.value}
-                />
-                {p.status ? (
-                  <Text style={styles.percStatus}>{p.status}</Text>
-                ) : null}
-                {meta ? (
-                  <View style={styles.percHelper}>
-                    <Text style={styles.percHelperLine}>
-                      测什么 · {meta.measuresWhat}
-                    </Text>
-                    <Text style={styles.percHelperLine}>
-                      常见影响因素 · {meta.commonFactors}
-                    </Text>
-                  </View>
-                ) : (
-                  <Text style={styles.percObs}>{p.observation}</Text>
-                )}
-                {p.detail ? (
-                  <Text style={styles.percDetail}>{p.detail}</Text>
-                ) : null}
-              </View>
-            );
-          })}
-        </AccordionSection>
-
-        {/* 3. 分区提示 */}
-        <AccordionSection
-          title={leads.zone_tips.title}
-          lead={leads.zone_tips.lead}
-        >
-          {result.report_paid.zone_notes.length === 0 ? (
-            <Text style={styles.bulletMuted}>
-              本次图像暂无明显分区依据，已隐藏空分区。
-            </Text>
-          ) : (
-            result.report_paid.zone_notes.map((z, i) => (
-              <View key={`${z.zone}-${i}`} style={styles.zone}>
-                <Text style={styles.zoneTitle}>{z.zone_zh}</Text>
-                <Text style={styles.zoneNote}>{z.note}</Text>
-              </View>
-            ))
-          )}
-        </AccordionSection>
-
-        {/* 4. 14天步骤 */}
-        <AccordionSection
-          title={leads.plan_14d.title}
-          lead={leads.plan_14d.lead}
-        >
-          <Text style={styles.subHead}>晨间</Text>
-          {result.routine_paid.am.map((s) => (
-            <View key={`am-${s.step}`} style={styles.step}>
-              <Text style={styles.stepNum}>{s.step}</Text>
-              <View style={styles.stepBody}>
-                <Text style={styles.stepAction}>{s.action}</Text>
-                <Text style={styles.stepPurpose}>{s.purpose}</Text>
-              </View>
-            </View>
-          ))}
-          <Text style={styles.subHead}>晚间</Text>
-          {result.routine_paid.pm.map((s) => (
-            <View key={`pm-${s.step}`} style={styles.step}>
-              <Text style={styles.stepNum}>{s.step}</Text>
-              <View style={styles.stepBody}>
-                <Text style={styles.stepAction}>{s.action}</Text>
-                <Text style={styles.stepPurpose}>{s.purpose}</Text>
-              </View>
-            </View>
-          ))}
-          {result.routine_paid.weekly.length > 0 ? (
-            <>
-              <Text style={styles.subHead}>每周</Text>
-              {result.routine_paid.weekly.map((w) => (
-                <Text key={w} style={styles.bullet}>
-                  · {w}
-                </Text>
-              ))}
-            </>
-          ) : null}
-        </AccordionSection>
-
-        {/* 5. 产品推荐 */}
-        <AccordionSection
-          title={leads.products.title}
-          lead={leads.products.lead}
-        >
-          <Text style={styles.noLinkNote}>{PRODUCTS_LIST_GUIDE}</Text>
-          {result.products_paid.items.map((p) => (
-            <View key={p.slot} style={styles.product}>
-              <View style={styles.productCatWrap}>
-                <Text style={styles.productCat}>{p.category_zh}</Text>
-              </View>
-              <Text style={styles.productName}>
-                {p.name} · {p.model}
-              </Text>
-              <Text style={styles.productMapped}>
-                对应关注点 · {p.mapped_concern}
-              </Text>
-              <Text style={styles.productWhy}>{p.why}</Text>
-            </View>
-          ))}
-        </AccordionSection>
-
-        {/* 6. 注意事项 */}
-        <AccordionSection title={leads.notes.title} lead={leads.notes.lead}>
-          {result.routine_paid.avoid.map((a) => (
-            <Text key={a} style={styles.bulletMuted}>
-              · 避开：{a}
-            </Text>
-          ))}
-          {lifestyle.map((t) => (
-            <Text key={t} style={styles.bullet}>
-              · {t}
-            </Text>
-          ))}
-          {result.routine_paid.avoid.length === 0 && lifestyle.length === 0 ? (
-            <Text style={styles.bulletMuted}>暂无额外注意事项</Text>
-          ) : null}
-        </AccordionSection>
-
-        <View style={styles.endBlock}>
-          <Text style={styles.endNote}>
-            本次报告已解锁。如需再次分析，请重新开始流程（将再次付费）。
-          </Text>
-          <SecondaryButton
-            label="结束并回到首页"
-            onPress={() => {
-              resetSession();
-              navigation.reset({ index: 0, routes: [{ name: 'Gender' }] });
-            }}
-          />
-        </View>
-
-        <Text style={styles.disclaimer}>{DISCLAIMER}</Text>
-      </ScrollView>
-    </SafeAreaView>
+      <Text style={[s.small, { marginTop: 24 }]}>{result.disclaimer}</Text>
+    </ReportPage>
   );
 }
-
-function ScoreBar({ label, value }: { label: string; value: number }) {
-  return (
-    <View style={styles.barRow}>
-      <Text style={styles.barLabel} numberOfLines={1}>
-        {label}
-      </Text>
-      <View style={styles.barTrack}>
-        <View style={[styles.barFill, { width: `${value}%` }]} />
-      </View>
-      <Text style={styles.barValue}>{value}</Text>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg },
-  scroll: { padding: 24, paddingTop: 48, paddingBottom: 48 },
-  brand: {
-    fontSize: 12,
-    color: colors.textMuted,
-    letterSpacing: 1.5,
-    marginBottom: 10,
-  },
-  unlockBanner: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 20,
-    marginBottom: 16,
-  },
-  bigScore: {
-    fontSize: 64,
-    fontWeight: '200',
-    color: colors.text,
-    letterSpacing: -3,
-  },
-  tier: { fontSize: 16, fontWeight: '700', marginBottom: 8, marginTop: 2 },
-  tendency: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 20,
-    marginBottom: 12,
-  },
-  summary: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    lineHeight: 22,
-    marginBottom: 16,
-  },
-  subHead: {
-    color: colors.text,
-    fontWeight: '700',
-    fontSize: 13,
-    marginTop: 10,
-    marginBottom: 10,
-  },
-  percBlock: {
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  evidenceTip: {
-    color: colors.textMuted,
-    fontSize: 11,
-    lineHeight: 16,
-    marginBottom: 12,
-  },
-  percObs: {
-    color: colors.textMuted,
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 4,
-    marginBottom: 6,
-  },
-  percHelper: {
-    marginTop: 4,
-    marginBottom: 6,
-    gap: 2,
-  },
-  percHelperLine: {
-    color: colors.textMuted,
-    fontSize: 11,
-    lineHeight: 16,
-  },
-  percStatus: {
-    color: colors.primary,
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 4,
-  },
-  percDetail: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 20,
-  },
-  concern: { marginBottom: 12 },
-  concernTitle: { color: colors.text, fontWeight: '700', fontSize: 15 },
-  concernNote: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    marginTop: 2,
-    lineHeight: 19,
-  },
-  zone: { marginBottom: 10 },
-  zoneTitle: { color: colors.primary, fontWeight: '700', fontSize: 13 },
-  zoneNote: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    marginTop: 2,
-    lineHeight: 19,
-  },
-  step: { flexDirection: 'row', marginBottom: 14, alignItems: 'flex-start' },
-  stepNum: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: 'rgba(232,160,176,0.2)',
-    color: colors.primary,
-    textAlign: 'center',
-    lineHeight: 26,
-    fontWeight: '700',
-    fontSize: 13,
-    overflow: 'hidden',
-    marginRight: 12,
-  },
-  stepBody: { flex: 1 },
-  stepAction: { color: colors.text, fontWeight: '700', fontSize: 14 },
-  stepPurpose: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    marginTop: 4,
-    lineHeight: 18,
-  },
-  bullet: { color: colors.textSecondary, fontSize: 13, marginBottom: 6 },
-  bulletMuted: { color: colors.textMuted, fontSize: 13, marginBottom: 6 },
-  noLinkNote: {
-    color: colors.textMuted,
-    fontSize: 12,
-    marginBottom: 14,
-    lineHeight: 17,
-  },
-  product: {
-    marginBottom: 18,
-    paddingBottom: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  productCatWrap: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(232,160,176,0.14)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  productCat: {
-    color: colors.primary,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  productName: {
-    color: colors.text,
-    fontWeight: '700',
-    fontSize: 15,
-    marginBottom: 6,
-  },
-  productMapped: {
-    color: colors.primary,
-    fontSize: 12,
-    fontWeight: '600',
-    marginBottom: 6,
-  },
-  productWhy: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 20,
-  },
-  barRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  barLabel: { width: 88, color: colors.textSecondary, fontSize: 12 },
-  barTrack: {
-    flex: 1,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    marginHorizontal: 8,
-    overflow: 'hidden',
-  },
-  barFill: {
-    height: '100%',
-    borderRadius: 4,
-    backgroundColor: colors.primary,
-  },
-  barValue: {
-    width: 28,
-    textAlign: 'right',
-    color: colors.text,
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  endBlock: { marginTop: 8, marginBottom: 16, gap: 12 },
-  endNote: {
-    color: colors.textMuted,
-    fontSize: 12,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  disclaimer: {
-    fontSize: 10,
-    color: colors.textMuted,
-    textAlign: 'center',
-    lineHeight: 15,
-  },
-  fallback: {
-    flex: 1,
-    backgroundColor: colors.bg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-    gap: 16,
-  },
-  fallbackText: { color: colors.text, fontSize: 16 },
-});

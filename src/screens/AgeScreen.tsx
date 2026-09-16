@@ -21,6 +21,7 @@ import {
   Subtitle,
   Title,
 } from '../components/ui';
+import { CarePreferencesForm } from '../components/CarePreferences';
 import { colors, DISCLAIMER } from '../theme/tiers';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Age'>;
@@ -28,7 +29,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Age'>;
 const AGE_ACCESSORY_ID = 'averie-age-input-accessory';
 
 export function AgeScreen({ navigation }: Props) {
-  const { age, setAge } = useSession();
+  const { age, setAge, preferences, setPreferences } = useSession();
   const [text, setText] = useState(age != null ? String(age) : '');
   const parsed = parseInt(text, 10);
   const valid = !Number.isNaN(parsed) && parsed >= 13 && parsed <= 99;
@@ -57,14 +58,14 @@ export function AgeScreen({ navigation }: Props) {
           keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
         >
-          <Pressable style={styles.flexGrow} onPress={Keyboard.dismiss}>
+          <View style={styles.flexGrow}>
             <View style={styles.progress}>
               <View style={[styles.dot, styles.dotDone]} />
               <View style={[styles.dot, styles.dotActive]} />
               <View style={styles.dot} />
             </View>
             <Title>你的年龄</Title>
-            <Subtitle>帮助引擎理解肤况先验，不会直接当作分数。</Subtitle>
+            <Subtitle>作为基础信息，不会根据年龄直接加减分。</Subtitle>
 
             <SoftInput
               value={text}
@@ -76,9 +77,7 @@ export function AgeScreen({ navigation }: Props) {
               returnKeyType="done"
               blurOnSubmit
               onSubmitEditing={() => Keyboard.dismiss()}
-              inputAccessoryViewID={
-                Platform.OS === 'ios' ? AGE_ACCESSORY_ID : undefined
-              }
+              inputAccessoryViewID={Platform.OS === 'ios' ? AGE_ACCESSORY_ID : undefined}
             />
             {!valid && text.length > 0 ? (
               <Text style={styles.hint}>请输入 13–99 之间的整数</Text>
@@ -86,10 +85,11 @@ export function AgeScreen({ navigation }: Props) {
               <Text style={styles.hint}> </Text>
             )}
 
+            <CarePreferencesForm value={preferences} onChange={setPreferences} />
             <View style={styles.spacer} />
             <PrimaryButton label="下一步" disabled={!valid} onPress={goNext} />
             <DisclaimerFooter text={DISCLAIMER} />
-          </Pressable>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -128,16 +128,16 @@ const styles = StyleSheet.create({
     width: 28,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: colors.border,
   },
-  dotActive: { backgroundColor: '#E8A0B0' },
-  dotDone: { backgroundColor: 'rgba(232,160,176,0.45)' },
+  dotActive: { backgroundColor: colors.primary },
+  dotDone: { backgroundColor: '#ABB99F' },
   hint: { color: colors.textMuted, fontSize: 12, marginTop: 10 },
   spacer: { flexGrow: 1, minHeight: 28 },
   accessory: {
     backgroundColor: '#1A1A1E',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.12)',
+    borderTopColor: colors.border,
     paddingHorizontal: 12,
     paddingVertical: 8,
     alignItems: 'flex-end',
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: colors.border,
   },
   accessoryBtnPressed: { opacity: 0.85 },
   accessoryBtnText: {

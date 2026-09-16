@@ -1,116 +1,4 @@
-/**
- * 文案大师 Averie Skin copy pack — embeddable constants & helpers.
- * Keys: skin_tendency / dim_* / report_* / dimensionMeta (helper v2.2)
- */
-
-import { PerceptionKey } from '../types/analysis';
-
-export type DimTier = '好' | '中' | '差';
-
-/** Prefer report section keys */
-export const REPORT_SECTION_LEADS: Record<
-  | 'report_overview'
-  | 'details'
-  | 'zone_tips'
-  | 'plan_14d'
-  | 'products'
-  | 'notes',
-  { title: string; lead: string }
-> = {
-  report_overview: {
-    title: '总览',
-    lead: '先用一分钟，抓住今天的主画面和优先关注点。',
-  },
-  details: {
-    title: '分项详解',
-    lead: '每个维度：看见什么→可能和什么有关→护理可以往哪走。',
-  },
-  zone_tips: {
-    title: '分区提示',
-    lead: '按脸部分区看，比整张脸一刀切更管用。',
-  },
-  plan_14d: {
-    title: '14天步骤',
-    lead: '不是疗程承诺，是可执行的节奏参考，按耐受微调。',
-  },
-  products: {
-    title: '产品推荐',
-    lead: '只给名称与型号占位，帮你对上关注点；请自行判断是否适合。',
-  },
-  notes: {
-    title: '注意事项',
-    lead: '边界说清楚，比多写几句安抚更重要。',
-  },
-};
-
-export const CTA_COPY = {
-  primary: '查看完整报告',
-  secondary: '把「为什么」和「接下来怎么做」展开讲清楚',
-};
-
-export const UNLOCK_COPY =
-  '完整报告已解锁。从总览开始读就好，其他分区需要时再展开。';
-
-export const DISCLAIMER_COPY =
-  'Averie Skin基于自拍图像给出护肤向观察与护理方向参考，不构成医疗诊断或治疗效果承诺。';
-
-
-/** Seven-dimension helper copy v2.2 — fixed lines; do NOT vary by score */
-export interface DimensionMeta {
-  key: PerceptionKey;
-  /** UI dimension title */
-  labelZh: string;
-  /** 测什么 */
-  measuresWhat: string;
-  /** 常见影响因素（educational; not photo proof） */
-  commonFactors: string;
-}
-
-export const DIMENSION_META: Record<PerceptionKey, DimensionMeta> = {
-  radiance: {
-    key: 'radiance',
-    labelZh: '光泽表现',
-    measuresWhat: '柔和光泽',
-    commonFactors: '睡眠不足、清洁过度、保湿不够、干燥环境',
-  },
-  oiliness: {
-    key: 'oiliness',
-    labelZh: '油光表现',
-    measuresWhat: '油脂光泽密度',
-    commonFactors: '湿热气候、饮食偏油腻、过度控油、护肤叠太厚',
-  },
-  pores: {
-    key: 'pores',
-    labelZh: '毛孔可见度',
-    measuresWhat: '毛孔清晰度',
-    commonFactors: '长期出油、清洁习惯、反复挤压、年龄增长',
-  },
-  texture: {
-    key: 'texture',
-    labelZh: '表面纹理',
-    measuresWhat: '表面粗糙与起伏',
-    commonFactors: '干燥缺水、频繁去角质、环境干燥、护肤不规律',
-  },
-  tone_evenness: {
-    key: 'tone_evenness',
-    labelZh: '肤色均匀度',
-    measuresWhat: '肤色是否均匀',
-    commonFactors: '长期紫外线、防晒不足、色沉反复、卸妆不彻底',
-  },
-  fine_lines: {
-    key: 'fine_lines',
-    labelZh: '细纹可见度',
-    measuresWhat: '细纹清晰度',
-    commonFactors: '表情习惯、干燥缺水、睡眠不足、长期日晒',
-  },
-  redness: {
-    key: 'redness',
-    labelZh: '泛红表现',
-    measuresWhat: '泛红程度',
-    commonFactors: '温差刺激、护肤刺激、辛辣酒精、屏障不稳定',
-  },
-};
-
+import { DimStatus, PerceptionKey } from '../types/analysis';
 export const DIMENSION_ORDER: PerceptionKey[] = [
   'radiance',
   'oiliness',
@@ -120,168 +8,52 @@ export const DIMENSION_ORDER: PerceptionKey[] = [
   'fine_lines',
   'redness',
 ];
-
-/** Optional ⓘ 对照 tip — show once near dimensions */
-export const EVIDENCE_MAP_TIP =
-  '线→细纹；小点轮廓→毛孔；片状粗糙/起皮/起伏→表面纹理。同一证据只归一维。';
-
-export const PRODUCTS_LIST_GUIDE =
-  '按你的关注点匹配到品类与型号占位，方便对照柜上实物；是否适合请自行判断。';
-
-/** Map free/paid dim scores → 好/中/差 */
-export function dimTierFromScore(value: number): DimTier {
-  if (value >= 70) return '好';
-  if (value >= 50) return '中';
-  return '差';
-}
-
-/** Seven-dim side notes (旁注 12–28 字), advisor tone; cycle by seed index */
-export const DIM_SIDE_NOTES: Record<
+export const DIMENSION_META: Record<
   PerceptionKey,
-  Record<DimTier, string[]>
+  { labelZh: string; explanation: string }
 > = {
-  radiance: {
-    好: ['光是匀的，像刚喝过水的感觉', '高光自然落在脸上，不油不哑'],
-    中: ['有光，但有点「散」，可以再润一点', '亮得不够透，更像表层还渴着'],
-    差: ['今天偏哑，光不太愿意停在脸上', '看起来倦一点，优先补水再谈光泽'],
-  },
-  oiliness: {
-    好: ['出油很克制，T区还算听话', '油水平衡还在线，今天不用慌'],
-    中: ['局部开始亮了，尤其是中午前后', '出油有信号，但还没整张脸开趴'],
-    差: ['油感比较活跃，清洁别过度', '今天油意明显，控油要温和、别拔干'],
-  },
-  pores: {
-    好: ['毛孔很低调，光线里也不抢戏', '观感细腻干净，状态很安静'],
-    中: ['毛孔能看见，但还在「正常存在感」里', '鼻翼/面中更明显一点，很常见'],
-    差: ['毛孔今天更醒目，和出油、光影有关', '看起来偏粗，护理偏清透与温和代谢'],
-  },
+  radiance: { labelZh: '暗沉', explanation: '看照片里是否有局部发暗，不评价肤色深浅。' },
+  oiliness: { labelZh: '出油', explanation: '看照片里的油光，不代表实际出油量。' },
+  pores: { labelZh: '毛孔', explanation: '看毛孔是否明显，不判断是否堵塞。' },
   texture: {
-    好: ['触感想象起来是滑的，纹理很乖', '表面平整，光在脸上走得很顺'],
-    中: ['有一点细纹路，近看才发现', '不够「镜面」，但日常完全能接受'],
-    差: ['纹理更明显，像皮肤有点脱水起皱', '平整度一般，保湿和轻薄护理更友好'],
+    labelZh: '粗糙起皮',
+    explanation: '看表面是否平整、有无起皮，不推测摸起来的感觉。',
   },
   tone_evenness: {
-    好: ['肤色铺得很匀，像一张干净的底', '深浅差不大，整体看起来很顺眼'],
-    中: ['局部有一点深浅差，不刺眼', '脸颊/嘴周可能略不均，很常见'],
-    差: ['色差更明显，防晒和温和护理更值得坚持', '均匀度一般，别急着叠很多美白概念'],
+    labelZh: '肤色不均',
+    explanation: '比较面部不同位置的颜色，不以白为好。',
   },
-  fine_lines: {
-    好: ['细纹很少说话，表情纹也安静', '眼下和嘴周今天都还算轻松'],
-    中: ['有浅纹，多半是缺水或表情习惯', '笑的时候更明显一点，静态还好'],
-    差: ['细纹更清晰，优先润泽，别只盯抗老词', '纹路存在感强，保湿与睡眠往往更先'],
-  },
-  redness: {
-    好: ['红感很低，今天的肤色很稳', '今天看起来平静舒服，不紧绷'],
-    中: ['有一点薄红，像刚运动或吹风后', '两颊略红，先观察是不是刺激或温差'],
-    差: ['泛红较明显，步骤做少、做温和更合适', '红意偏高，新成分先停一停再加'],
-  },
+  fine_lines: { labelZh: '细纹', explanation: '看当前照片里的细纹，不推算皮肤年龄。' },
+  redness: { labelZh: '泛红', explanation: '看发红的位置和范围，不据此判断敏感肌。' },
 };
-
-/**
- * Paid 分项详解 bodies — 所见→可能相关→护理方向，约 60–120 字
- * Prefer keys: radiance|oiliness|pores|texture|tone_evenness|fine_lines|redness
- */
-export const DIM_DETAIL_BODIES: Record<
-  PerceptionKey,
-  Record<DimTier, string>
-> = {
-  radiance: {
-    好: '【所见】今天光泽铺得匀，亮感自然停在脸上，不油不哑。【可能相关】日常保湿节奏、睡眠和清洁力度比较合拍。【护理方向】维持薄层保湿与日间防晒即可；若偶尔偏哑，先补水再谈提亮。',
-    中: '【所见】今天光泽偏「散」，亮一点却不够透，更像表层还渴着。【可能相关】清洁过猛、保湿停在表面、睡眠或空调干燥。【护理方向】先把保湿做成薄层叠润，再考虑提亮；刺痛或紧绷时把步骤做简。',
-    差: '【所见】今天偏哑，光不太愿意停在脸上，观感略倦。【可能相关】缺水、熬夜、防晒与保湿断档较常见。【护理方向】优先把水润做满、做薄；刺激性叠加先让位，等光泽回稳再加细节。',
-  },
-  oiliness: {
-    好: '【所见】出油很克制，T区还算听话，油水平衡在线。【可能相关】气候、清洁力度与保湿质地比较匹配。【护理方向】维持温和清洁与清爽保湿即可；别因「怕油」过度洗到发紧。',
-    中: '【所见】局部开始亮了，尤其中午前后，还没到整张脸开趴。【可能相关】湿热、妆前闷感、控油与保湿失衡。【护理方向】清洁见底即可，控油选清爽不拔干；泛红时先减刺激成分。',
-    差: '【所见】T区油意比较活跃，光线下一层细膜很明显，毛孔也会被一起叫醒。【可能相关】季节湿热、过度控油反弹、妆前闷。【护理方向】清洁温和见底，控油清爽不拔干；发红发痒时先停刺激性成分。',
-  },
-  pores: {
-    好: '【所见】毛孔很低调，光线里也不抢戏，观感细腻。【可能相关】出油克制、清洁与质地选择比较合适。【护理方向】保持清透护肤节奏即可；无需为「看不见」叠加猛攻步骤。',
-    中: '【所见】鼻翼和面中毛孔有存在感，但不至于整脸粗相。【可能相关】出油、光影角度、角质堆积观感。【护理方向】保持清透质地和规律温和护理；稳定比猛攻重要，别指望一眼消失。',
-    差: '【所见】毛孔今天更醒目，常和出油、光影一起出现。【可能相关】油光、湿热、清洁过猛或过少都可能叠在一起。【护理方向】清透质地与温和代谢为主；步骤做稳，不适就减法。',
-  },
-  texture: {
-    好: '【所见】触感想象起来是滑的，纹理很乖，光走得很顺。【可能相关】保湿到位、环境不那么干。【护理方向】维持轻薄保湿与防晒；不必为「更镜面」叠加刺激。',
-    中: '【所见】有一点细纹路，近看才发现，日常完全能接受。【可能相关】轻度缺水、干燥环境、表情习惯。【护理方向】把水润做稳，质地选好推开的；酸类与摩擦先让位给舒服。',
-    差: '【所见】表面平整度一般，细看有点像脱水后的细皱褶。【可能相关】缺水、干燥环境、防晒和保湿断档。【护理方向】先把水润做满、做薄；酸类与摩擦先让位给屏障舒服。',
-  },
-  tone_evenness: {
-    好: '【所见】肤色铺得很匀，像一张干净的底，深浅差不大。【可能相关】防晒习惯与温和护理比较持续。【护理方向】继续日间防护与基础保湿；美白概念产品不必急着叠很多。',
-    中: '【所见】局部有浅浅的深浅差，多半在脸颊或嘴周，整体还不刺眼。【可能相关】紫外线、旧印观感、卸妆是否干净。【护理方向】防晒是底盘，美白概念慢慢加；敏感时只做舒缓。',
-    差: '【所见】色差更明显一些，均匀度一般。【可能相关】光暴露、护理断档、局部刺激后的痕迹观感。【护理方向】防晒和温和护理更值得坚持；别急着叠很多美白概念，不适就做减法。',
-  },
-  fine_lines: {
-    好: '【所见】细纹很少说话，表情纹也安静，眼下嘴周都还轻松。【可能相关】润泽与休息节奏尚可。【护理方向】维持保湿与防晒即可；不必只盯抗老词堆步骤。',
-    中: '【所见】笑起来时纹路更清楚，静态还好，更像表情与缺水叠在一起。【可能相关】脱水、睡眠、反复表情。【护理方向】眼周口周用润、用轻；大词先放下，舒服最重要。',
-    差: '【所见】细纹更清晰，存在感偏强。【可能相关】缺水、睡眠、干燥与表情习惯较常见。【护理方向】优先润泽与休息节奏，别只盯抗老词；刺痛紧绷时先把步骤做简。',
-  },
-  redness: {
-    好: '【所见】红感很低，肤色很稳，看起来平静舒服。【可能相关】刺激少、温差适应尚可。【护理方向】维持温和步骤即可；新成分仍建议小范围试。',
-    中: '【所见】有一点薄红，像刚运动或吹风后，两颊略红。【可能相关】温差、轻度刺激、季节波动。【护理方向】先观察是否来自刺激或温差；步骤做少、做温和，新成分慢一点加。',
-    差: '【所见】两颊红意偏明显，光落上去有点烫感。【可能相关】温差、刺激成分、屏障不稳定。【护理方向】步骤做少，选温和；新成分先暂停，等红感退下再逐步加回。',
-  },
+export const SCORE_ANCHORS = [100, 85, 70, 50, 25] as const;
+export function dimTierFromScore(value: number | null): DimStatus {
+  if (value === null) return '暂无法判断';
+  return value >= 80 ? '表现不错' : value >= 60 ? '可以留意' : '优先关注';
+}
+export const TENDENCY_LABELS = {
+  combination_oily: '混合偏油',
+  combination_dry: '混合偏干',
+  oily: '偏油',
+  dry: '偏干',
+  balanced: '比较均衡',
+  unclear: '暂不判断肤质',
+} as const;
+export const DECISION_LABELS = {
+  recommended: '建议保留',
+  optional: '按需选择',
+  not_needed: '暂时不用加',
+  hold: '先缓一缓',
+} as const;
+export const CATEGORY_LABELS = {
+  cleanser: '洁面',
+  lotion: '保湿乳',
+  cream: '面霜',
+  serum: '精华',
+  sunscreen: '防晒',
+  toner: '爽肤水',
+} as const;
+export const CTA_COPY = {
+  primary: '查看我的护理方案',
+  secondary: '早晚怎么用，每一类产品要不要加',
 };
-
-/** Tendency main tag + picture lines — template: {主标签} · {画面句} */
-export type TendencyTag =
-  | '混油倾向'
-  | '干皮缺水感'
-  | '中性偏稳'
-  | '敏感波动感'
-  | '油皮活跃感'
-  | '干敏倾向';
-
-export const TENDENCY_PICTURES: Record<TendencyTag, string[]> = {
-  混油倾向: [
-    'T区像刚开完会的玻璃桌，亮一点；两颊还干着',
-    '中午过后，额头先亮起来，下巴还安静',
-    '不是整张脸都油，是「中间先醒、两侧还困」',
-  ],
-  干皮缺水感: [
-    '笑的时候，脸颊像轻轻折过的纸',
-    '妆更容易卡在细纹里，像吸进了粉',
-    '摸上去不粗糙，但看起来「喝不够水」',
-  ],
-  中性偏稳: [
-    '今天这张脸，像刚洗完、还没决定要不要出油',
-    '光均匀地铺着，没有明显「抢戏」的区域',
-    '状态干净，适合把精力留给保养细节',
-  ],
-  敏感波动感: [
-    '两颊有一点薄红，像刚吹过风',
-    '光有点「烫」在皮肤上，边界不那么服帖',
-    '今天更适合少步骤、慢一点',
-  ],
-  油皮活跃感: [
-    '整张脸带着一层细细的光膜',
-    '毛孔在光线里更明显，像皮肤在呼吸',
-    '出油不是坏事，是今天的主旋律',
-  ],
-  干敏倾向: [
-    '干，还带着一点不服帖的红',
-    '屏障今天偏脆，经不起太热闹的护理',
-    '先求稳住，再谈提亮和细腻',
-  ],
-};
-
-export function buildSkinTendency(
-  tag: TendencyTag,
-  pictureIndex: number,
-): string {
-  const list = TENDENCY_PICTURES[tag];
-  const picture = list[Math.abs(pictureIndex) % list.length];
-  return `${tag} · ${picture}`;
-}
-
-export function pickDimSideNote(
-  key: PerceptionKey,
-  tier: DimTier,
-  variantIndex: number,
-): string {
-  const list = DIM_SIDE_NOTES[key][tier];
-  return list[Math.abs(variantIndex) % list.length];
-}
-
-export function pickDimDetail(key: PerceptionKey, tier: DimTier): string {
-  return DIM_DETAIL_BODIES[key][tier];
-}

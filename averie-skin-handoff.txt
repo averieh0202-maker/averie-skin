@@ -1,0 +1,18 @@
+Averie Skin v3 交接说明
+
+基于用户标注的 5d0fde8 源码包改写，2026-09-16。
+
+先看 docs/框架与中文文案规范.md 和 docs/完整示例报告.md。
+两个 Schema 分别是 docs/llm-output.schema.json 与 docs/report-output.schema.json。
+具体改动已落在 src/；不是仅供讨论的文案草案。
+
+运行：Node.js >=22.13，进入项目目录 npm ci，然后 npm run web。
+首页“先看一份示例报告”无需 Key 即可查看所有新版报告内容。
+如需本地真实分析，自行将 .env.example 复制为 .env，填开发 Key，npx expo start -c，在分析设置选 Qwen。
+现有客户端直连仅用于开发，生产 Key 必须迁移到后端代理。
+
+验证：npm run typecheck；npm test；npm run export:contracts。
+Web 与 iOS JS/Hermes 导出通过，21 项规则及合同测试通过；未做真机和真实模型联调。
+支付目前为明确标识的功能预览，不会扣款。产品目录为有限初始集合，防晒候选与海外目录的资料限制见文档。
+
+包中不含 .env、node_modules、.expo、.git、构建目录。本次未读取或修改原项目 .env。

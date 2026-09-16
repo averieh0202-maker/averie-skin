@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Text, Image, Alert } from 'react-native';
+import { View, StyleSheet, Text, Image, Alert, ScrollView } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
@@ -20,6 +20,7 @@ export function SelfieScreen({ navigation }: Props) {
   const { imageUri, setImageUri, runAnalysis, analyzerEngine } = useSession();
   const [uri, setUri] = useState<string | null>(imageUri);
   const [busy, setBusy] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   async function pick(fromCamera: boolean) {
     try {
@@ -63,22 +64,13 @@ export function SelfieScreen({ navigation }: Props) {
   async function onAnalyze() {
     if (!uri) return;
     setBusy(true);
+    setErrorMessage(null);
     setImageUri(uri);
     try {
-      const { notice } = await runAnalysis({ imageUri: uri });
-      if (notice) {
-        // Don't navigate away until user acknowledges fallback/warning
-        Alert.alert('分析提示', notice, [
-          {
-            text: '知道了',
-            onPress: () => navigation.replace('FreeResult'),
-          },
-        ]);
-      } else {
-        navigation.replace('FreeResult');
-      }
-    } catch {
-      Alert.alert('分析失败', '请稍后重试，或在首页改回 Mock 引擎。');
+      await runAnalysis({ imageUri: uri });
+      navigation.replace('FreeResult');
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : '请稍后重试。');
     } finally {
       setBusy(false);
     }
@@ -93,50 +85,68 @@ export function SelfieScreen({ navigation }: Props) {
 
   return (
     <Screen>
-      <View style={styles.progress}>
-        <View style={[styles.dot, styles.dotDone]} />
-        <View style={[styles.dot, styles.dotDone]} />
-        <View style={[styles.dot, styles.dotActive]} />
-      </View>
-      <Title>自拍测肤</Title>
-      <Subtitle>
-        请正对光线充足处自拍，或从相册选择正面照。仅使用性别、年龄与自拍，无需问卷。
-      </Subtitle>
-      <Text style={styles.engineHint}>{engineHint}</Text>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 12 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.progress}>
+          <View style={[styles.dot, styles.dotDone]} />
+          <View style={[styles.dot, styles.dotDone]} />
+          <View style={[styles.dot, styles.dotActive]} />
+        </View>
+        <Title>自拍测肤</Title>
+        <Subtitle>
+          请正对光线充足处自拍，或从相册选择正面照。请关闭滤镜，尽量避免浓妆。
+        </Subtitle>
+        <Text style={styles.engineHint}>{engineHint}</Text>
+        {errorMessage ? (
+          <Text
+            accessibilityRole="alert"
+            style={{
+              color: colors.danger,
+              fontSize: 14,
+              lineHeight: 22,
+              marginBottom: 16,
+            }}
+          >
+            这次还没有生成报告。{errorMessage}
+          </Text>
+        ) : null}
 
-      <View style={styles.previewWrap}>
-        {uri ? (
-          <View style={styles.previewFrame}>
-            <Image source={{ uri }} style={styles.preview} />
-          </View>
-        ) : (
-          <View style={styles.placeholder}>
-            <View style={styles.placeholderRing}>
-              <Text style={styles.placeholderIcon}>◎</Text>
+        <View style={styles.previewWrap}>
+          {uri ? (
+            <View style={styles.previewFrame}>
+              <Image source={{ uri }} style={styles.preview} />
             </View>
-            <Text style={styles.placeholderText}>尚未选择照片</Text>
-            <Text style={styles.placeholderHint}>正面 · 自然光 · 无滤镜</Text>
+          ) : (
+            <View style={styles.placeholder}>
+              <View style={styles.placeholderRing}>
+                <Text style={styles.placeholderIcon}>◎</Text>
+              </View>
+              <Text style={styles.placeholderText}>尚未选择照片</Text>
+              <Text style={styles.placeholderHint}>正面、自然光、无滤镜</Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.row}>
+          <View style={styles.half}>
+            <SecondaryButton label="拍照" onPress={() => pick(true)} />
           </View>
-        )}
-      </View>
-
-      <View style={styles.row}>
-        <View style={styles.half}>
-          <SecondaryButton label="拍照" onPress={() => pick(true)} />
+          <View style={styles.half}>
+            <SecondaryButton label="从相册选" onPress={() => pick(false)} />
+          </View>
         </View>
-        <View style={styles.half}>
-          <SecondaryButton label="从相册选" onPress={() => pick(false)} />
-        </View>
-      </View>
 
-      <View style={styles.spacer} />
-      <PrimaryButton
-        label={busy ? '分析中…' : '开始分析'}
-        disabled={!uri}
-        loading={busy}
-        onPress={onAnalyze}
-      />
-      <DisclaimerFooter text={DISCLAIMER} />
+        <View style={styles.spacer} />
+        <PrimaryButton
+          label={busy ? '分析中…' : '开始分析'}
+          disabled={!uri}
+          loading={busy}
+          onPress={onAnalyze}
+        />
+        <DisclaimerFooter text={DISCLAIMER} />
+      </ScrollView>
     </Screen>
   );
 }
@@ -152,10 +162,10 @@ const styles = StyleSheet.create({
     width: 28,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: colors.border,
   },
-  dotActive: { backgroundColor: '#E8A0B0' },
-  dotDone: { backgroundColor: 'rgba(232,160,176,0.45)' },
+  dotActive: { backgroundColor: colors.primary },
+  dotDone: { backgroundColor: '#ABB99F' },
   engineHint: {
     color: colors.textMuted,
     fontSize: 12,

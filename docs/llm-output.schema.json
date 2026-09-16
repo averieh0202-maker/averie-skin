@@ -1,0 +1,431 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "quality",
+    "quality_note",
+    "tendency",
+    "tendency_explanation",
+    "perception"
+  ],
+  "properties": {
+    "version": {
+      "const": "3.0"
+    },
+    "quality": {
+      "enum": [
+        "usable",
+        "limited",
+        "unusable"
+      ]
+    },
+    "quality_note": {
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 120
+    },
+    "tendency": {
+      "enum": [
+        "combination_oily",
+        "combination_dry",
+        "oily",
+        "dry",
+        "balanced",
+        "unclear"
+      ]
+    },
+    "tendency_explanation": {
+      "type": "string",
+      "minLength": 12,
+      "maxLength": 100
+    },
+    "perception": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "radiance",
+        "oiliness",
+        "pores",
+        "texture",
+        "tone_evenness",
+        "fine_lines",
+        "redness"
+      ],
+      "properties": {
+        "radiance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "severity",
+            "observation",
+            "detail",
+            "action",
+            "regions"
+          ],
+          "properties": {
+            "severity": {
+              "enum": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                null
+              ]
+            },
+            "observation": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 60
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 30,
+              "maxLength": 180
+            },
+            "action": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 90
+            },
+            "regions": {
+              "type": "array",
+              "uniqueItems": true,
+              "maxItems": 6,
+              "items": {
+                "enum": [
+                  "forehead",
+                  "nose",
+                  "cheeks",
+                  "chin",
+                  "periocular",
+                  "perioral"
+                ]
+              }
+            }
+          }
+        },
+        "oiliness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "severity",
+            "observation",
+            "detail",
+            "action",
+            "regions"
+          ],
+          "properties": {
+            "severity": {
+              "enum": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                null
+              ]
+            },
+            "observation": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 60
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 30,
+              "maxLength": 180
+            },
+            "action": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 90
+            },
+            "regions": {
+              "type": "array",
+              "uniqueItems": true,
+              "maxItems": 6,
+              "items": {
+                "enum": [
+                  "forehead",
+                  "nose",
+                  "cheeks",
+                  "chin",
+                  "periocular",
+                  "perioral"
+                ]
+              }
+            }
+          }
+        },
+        "pores": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "severity",
+            "observation",
+            "detail",
+            "action",
+            "regions"
+          ],
+          "properties": {
+            "severity": {
+              "enum": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                null
+              ]
+            },
+            "observation": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 60
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 30,
+              "maxLength": 180
+            },
+            "action": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 90
+            },
+            "regions": {
+              "type": "array",
+              "uniqueItems": true,
+              "maxItems": 6,
+              "items": {
+                "enum": [
+                  "forehead",
+                  "nose",
+                  "cheeks",
+                  "chin",
+                  "periocular",
+                  "perioral"
+                ]
+              }
+            }
+          }
+        },
+        "texture": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "severity",
+            "observation",
+            "detail",
+            "action",
+            "regions"
+          ],
+          "properties": {
+            "severity": {
+              "enum": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                null
+              ]
+            },
+            "observation": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 60
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 30,
+              "maxLength": 180
+            },
+            "action": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 90
+            },
+            "regions": {
+              "type": "array",
+              "uniqueItems": true,
+              "maxItems": 6,
+              "items": {
+                "enum": [
+                  "forehead",
+                  "nose",
+                  "cheeks",
+                  "chin",
+                  "periocular",
+                  "perioral"
+                ]
+              }
+            }
+          }
+        },
+        "tone_evenness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "severity",
+            "observation",
+            "detail",
+            "action",
+            "regions"
+          ],
+          "properties": {
+            "severity": {
+              "enum": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                null
+              ]
+            },
+            "observation": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 60
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 30,
+              "maxLength": 180
+            },
+            "action": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 90
+            },
+            "regions": {
+              "type": "array",
+              "uniqueItems": true,
+              "maxItems": 6,
+              "items": {
+                "enum": [
+                  "forehead",
+                  "nose",
+                  "cheeks",
+                  "chin",
+                  "periocular",
+                  "perioral"
+                ]
+              }
+            }
+          }
+        },
+        "fine_lines": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "severity",
+            "observation",
+            "detail",
+            "action",
+            "regions"
+          ],
+          "properties": {
+            "severity": {
+              "enum": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                null
+              ]
+            },
+            "observation": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 60
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 30,
+              "maxLength": 180
+            },
+            "action": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 90
+            },
+            "regions": {
+              "type": "array",
+              "uniqueItems": true,
+              "maxItems": 6,
+              "items": {
+                "enum": [
+                  "forehead",
+                  "nose",
+                  "cheeks",
+                  "chin",
+                  "periocular",
+                  "perioral"
+                ]
+              }
+            }
+          }
+        },
+        "redness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "severity",
+            "observation",
+            "detail",
+            "action",
+            "regions"
+          ],
+          "properties": {
+            "severity": {
+              "enum": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                null
+              ]
+            },
+            "observation": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 60
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 30,
+              "maxLength": 180
+            },
+            "action": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 90
+            },
+            "regions": {
+              "type": "array",
+              "uniqueItems": true,
+              "maxItems": 6,
+              "items": {
+                "enum": [
+                  "forehead",
+                  "nose",
+                  "cheeks",
+                  "chin",
+                  "periocular",
+                  "perioral"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

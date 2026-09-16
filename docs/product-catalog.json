@@ -1,0 +1,184 @@
+[
+  {
+    "id": "cn-curel-foam",
+    "category": "cleanser",
+    "name": "珂润润浸保湿洁颜泡沫",
+    "model": "150ml 中国官网版本",
+    "region": "CN",
+    "ingredients": [
+      {
+        "name": "椰油酰谷氨酸钠",
+        "role": "清洁成分，帮助带走表面油脂和污物。"
+      },
+      {
+        "name": "月桂酰天冬氨酸钠",
+        "role": "清洁成分，参与泡沫清洁体系。"
+      },
+      {
+        "name": "甘油",
+        "role": "保湿剂，帮助保持表层水分。"
+      }
+    ],
+    "texture": "泡沫型，涂开时减少来回揉搓。",
+    "usage": "晚间轻柔清洁后冲净；早晨按油污和舒适度决定。按包装用量，不配合刷具。",
+    "caution": "以实物成分表为准。已知不耐受的成分应避开；有伤口、红肿或持续不适时，不自行试用新产品。",
+    "source_url": "https://www.kao.com/cn/products/curel/crl_facewash_00/",
+    "checked_on": "2026-09-16"
+  },
+  {
+    "id": "cn-curel-milk",
+    "category": "lotion",
+    "name": "珂润润浸保湿水润乳液",
+    "model": "120ml 中国官网版本",
+    "region": "CN",
+    "ingredients": [
+      {
+        "name": "甘油",
+        "role": "保湿剂，帮助保持表层水分。"
+      },
+      {
+        "name": "鲸蜡基-PG羟乙基棕榈酰胺",
+        "role": "用于保湿和皮肤脂质支持，不等同于天然神经酰胺。"
+      },
+      {
+        "name": "角鲨烷",
+        "role": "润肤成分，帮助减少干燥感。"
+      }
+    ],
+    "texture": "乳液型，适合希望保留基础保湿的选择。",
+    "usage": "洁面后涂布，额鼻不反复叠涂；保湿足够时不再叠面霜。",
+    "caution": "以实物成分表为准。已知不耐受的成分应避开；有伤口、红肿或持续不适时，不自行试用新产品。",
+    "source_url": "https://www.kao.com/cn/products/curel/crl_milk_00/",
+    "checked_on": "2026-09-16"
+  },
+  {
+    "id": "cn-curel-gel",
+    "category": "lotion",
+    "name": "珂润控油保湿凝露",
+    "model": "120ml 中国官网版本",
+    "region": "CN",
+    "ingredients": [
+      {
+        "name": "甘油",
+        "role": "保湿剂，帮助保持表层水分。"
+      },
+      {
+        "name": "鲸蜡基-PG羟乙基棕榈酰胺",
+        "role": "用于保湿和皮肤脂质支持，不等同于天然神经酰胺。"
+      },
+      {
+        "name": "聚二甲基硅氧烷",
+        "role": "润肤与成膜，调整涂布感。"
+      }
+    ],
+    "texture": "凝露型，可作为不喜欢厚重叠涂时的保湿备选。",
+    "usage": "用于保湿步骤，与乳液二选一；不作为精华重复叠加。",
+    "caution": "以实物成分表为准。已知不耐受的成分应避开；有伤口、红肿或持续不适时，不自行试用新产品。",
+    "source_url": "https://www.kao.com/cn/products/curel/crl_care_gel_00/",
+    "checked_on": "2026-09-16"
+  },
+  {
+    "id": "cn-curel-cream",
+    "category": "cream",
+    "name": "珂润润浸保湿滋润乳霜",
+    "model": "40g 中国官网版本",
+    "region": "CN",
+    "ingredients": [
+      {
+        "name": "甘油",
+        "role": "保湿剂，帮助保持表层水分。"
+      },
+      {
+        "name": "鲸蜡基-PG羟乙基棕榈酰胺",
+        "role": "用于保湿和皮肤脂质支持，不等同于天然神经酰胺。"
+      },
+      {
+        "name": "角鲨烷",
+        "role": "润肤成分，帮助减少干燥感。"
+      }
+    ],
+    "texture": "乳霜型，适合需要更滋润保湿感时作为替代。",
+    "usage": "洁面后作为保湿步骤；先替代乳液，不要求两者整脸叠加。",
+    "caution": "以实物成分表为准。已知不耐受的成分应避开；有伤口、红肿或持续不适时，不自行试用新产品。",
+    "source_url": "https://www.kao.com/cn/products/curel/crl_facecream_00/",
+    "checked_on": "2026-09-16"
+  },
+  {
+    "id": "cn-curel-essence",
+    "category": "serum",
+    "name": "珂润润浸保湿淡纹美容液",
+    "model": "40g 中国官网版本",
+    "region": "CN",
+    "ingredients": [
+      {
+        "name": "甘油",
+        "role": "保湿剂，帮助保持表层水分。"
+      },
+      {
+        "name": "鲸蜡基-PG羟乙基棕榈酰胺",
+        "role": "用于保湿和皮肤脂质支持，不等同于天然神经酰胺。"
+      },
+      {
+        "name": "聚二甲基硅氧烷",
+        "role": "润肤成分，帮助产品均匀涂开。"
+      }
+    ],
+    "texture": "凝胶型，以保湿护理为选择理由，不因名称承诺淡纹。",
+    "usage": "确认需要且试用无不适后，在保湿乳或面霜前使用；已有保湿足够时可省略。",
+    "caution": "以实物成分表为准。已知不耐受的成分应避开；有伤口、红肿或持续不适时，不自行试用新产品。",
+    "source_url": "https://www.kao.com/cn/products/curel/crl_essence_00/",
+    "checked_on": "2026-09-16"
+  },
+  {
+    "id": "cn-cetaphil-foam",
+    "category": "cleanser",
+    "name": "丝塔芙舒缓清润洁面泡沫",
+    "model": "200ml 中国官网版本",
+    "region": "CN",
+    "ingredients": [
+      {
+        "name": "椰油酰谷氨酸钠",
+        "role": "清洁成分，帮助带走表面油脂与污物。"
+      },
+      {
+        "name": "椰油酰两性基乙酸钠",
+        "role": "清洁成分，与其他表面活性剂组成清洁体系。"
+      },
+      {
+        "name": "甘油",
+        "role": "保湿剂，帮助保持表层水分。"
+      }
+    ],
+    "texture": "按压泡沫型，可作为不同清洁肤感的备选。",
+    "usage": "湿润面部后轻柔清洁并充分冲洗；与其他洁面二选一，不连续洗两遍。",
+    "caution": "以实物成分表为准。已知不耐受的成分应避开；有伤口、红肿或持续不适时，不自行试用新产品。",
+    "source_url": "https://www.cetaphil.com.cn/product/soothing-foam-wash",
+    "checked_on": "2026-09-16"
+  },
+  {
+    "id": "cn-cetaphil-cream",
+    "category": "cream",
+    "name": "丝塔芙舒润保湿霜",
+    "model": "85g 中国官网版本",
+    "region": "CN",
+    "ingredients": [
+      {
+        "name": "甘油",
+        "role": "保湿剂，帮助保持表层水分。"
+      },
+      {
+        "name": "矿脂",
+        "role": "封闭性保湿成分，帮助减少水分散失。"
+      },
+      {
+        "name": "鲸蜡醇",
+        "role": "脂肪醇类润肤成分，也用于调整乳霜质地。"
+      }
+    ],
+    "texture": "乳霜型，适合需要较滋润保湿感时考虑。",
+    "usage": "用作保湿步骤，先替代乳液；额鼻容易油亮时不反复厚涂。",
+    "caution": "含甜扁桃油，已知不耐受者应避开。以实物成分表为准。已知不耐受的成分应避开；有伤口、红肿或持续不适时，不自行试用新产品。",
+    "source_url": "https://www.cetaphil.com.cn/product/moisturising-cream",
+    "checked_on": "2026-09-16"
+  }
+]
