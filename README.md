@@ -2,6 +2,13 @@
 
 在 5d0fde8 对应交接包上重写的皮肤外观报告、护理规则和界面。Expo 57 / React Native / TypeScript。
 
+## 公开 Web（P1）
+
+- 站点：https://averieh0202-maker.github.io/averie-skin/
+- 分析 API（Cloudflare Worker，密钥仅服务端）：`https://averie-skin-api.averieh0202.workers.dev`
+- 健康检查：`GET /health` → `{"ok":true,"model":"qwen3-vl-plus"}`
+- 构建静态站时设置 `EXPO_PUBLIC_ANALYZE_API_URL` 指向上述 API；**不要**把 DashScope Key 打进前端。
+
 ## 运行
 
 使用 Node.js 22.13 或以上（本次构建使用 Node 24）。解压后进入本文件所在目录：
