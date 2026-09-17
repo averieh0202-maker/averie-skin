@@ -112,7 +112,13 @@ export function parseLlmJson(text: string): LlmAnalysisPayload {
     .replace(/^```(?:json)?\s*/i, '')
     .replace(/\s*```$/, '');
   try {
-    return validatePayload(JSON.parse(t));
+    const parsed = JSON.parse(t) as unknown;
+    // Models often echo JSON Schema meta keys from the prompt; drop before validate.
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && '$schema' in parsed) {
+      const { $schema: _drop, ...rest } = parsed as Record<string, unknown>;
+      return validatePayload(rest);
+    }
+    return validatePayload(parsed);
   } catch (e) {
     if (e instanceof ReportValidationError) throw e;
     throw new ReportValidationError(['invalid JSON']);

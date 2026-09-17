@@ -86,14 +86,22 @@ severity 是需要关注的可见程度：0=在清晰画面中不突出；1=轻�
 2. quality 与可判断项数一致：7→usable，1–6→limited，0→unusable；非 usable 时 tendency=unclear，并写清 quality_note。
 3. 禁止医疗诊断、准确率/百分比、网感词（主画面、微光、玻璃肌、很乖等）；observation/detail/action 字数落在 schema 区间。
 4. 只输出符合 schema 的 JSON，勿多余字段、勿 markdown 代码围栏。`;
+/** Schema fragment for the model prompt — omit $schema so the model does not echo it. */
+export function llmSchemaForPrompt(): unknown {
+  const { $schema: _omit, ...rest } = LLM_OUTPUT_SCHEMA as {
+    $schema?: string;
+  } & Record<string, unknown>;
+  return rest;
+}
+
 export function buildQwenUserPrompt(age: number, gender: string): string {
   return `用户自填年龄 ${age}，性别 ${gender}。按照片观察，不从年龄性别推断特征。
 维度名：${DIMENSION_ORDER.map((k) => `${k}=${DIMENSION_META[k].labelZh}`).join('，')}。
 observation 8–60字，detail 30–180字，action 8–90字，使用完整句子。无需重复免责声明。
-输出结构：${JSON.stringify(LLM_OUTPUT_SCHEMA)}
-自检：有 severity 必有 regions；null 须说明看不清；quality 与可判断项数一致；禁医疗/百分比/网感词。`;
+输出结构：${JSON.stringify(llmSchemaForPrompt())}
+自检：有 severity 必有 regions；null 须说明看不清；quality 与可判断项数一致；禁医疗/百分比/网感词。勿输出 $schema 或其他多余字段。`;
 }
 
 /** Appended on automatic validation retry (system + user). */
 export const QWEN_RETRY_CONSTRAINT =
-  '严格输出符合 schema 的 JSON；禁止医疗诊断、准确率/百分比、网感词；每个有 severity 的分项必须带 regions；severity=null 时 observation 须说明看不清原因；quality 与可判断项数一致。';
+  '严格输出符合 schema 的 JSON（不要输出 $schema）；禁止医疗诊断、准确率/百分比、网感词；每个有 severity 的分项必须带 regions；severity=null 时 observation 须说明看不清原因；quality 与可判断项数一致；action 须 8–90 字。';
