@@ -79,10 +79,21 @@ severity 是需要关注的可见程度：0=在清晰画面中不突出；1=轻�
 肤质标签只描述外观倾向；不能因不反光就认定干，不能因泛红就认定敏感。画面不完整时 tendency=unclear。
 暗沉不评价肤色深浅；出油只看油光；毛孔不等于堵塞；粗糙起皮不重复计毛孔细纹；肤色不均不重复计泛红。
 年龄性别只作上下文，不加减分。不得生成品牌、产品、成分或价格；应用会从已核对产品库匹配。
-不强制凑齐关注点或区域数量，也不刻意把每项都写好。`;
+不强制凑齐关注点或区域数量，也不刻意把每项都写好。
+
+硬性检查清单（输出前自检）：
+1. 每个 severity≠null 的分项必须带至少 1 个 regions；severity=null 时 regions=[]，observation 须说明看不清/无法判断的原因。
+2. quality 与可判断项数一致：7→usable，1–6→limited，0→unusable；非 usable 时 tendency=unclear，并写清 quality_note。
+3. 禁止医疗诊断、准确率/百分比、网感词（主画面、微光、玻璃肌、很乖等）；observation/detail/action 字数落在 schema 区间。
+4. 只输出符合 schema 的 JSON，勿多余字段、勿 markdown 代码围栏。`;
 export function buildQwenUserPrompt(age: number, gender: string): string {
   return `用户自填年龄 ${age}，性别 ${gender}。按照片观察，不从年龄性别推断特征。
 维度名：${DIMENSION_ORDER.map((k) => `${k}=${DIMENSION_META[k].labelZh}`).join('，')}。
 observation 8–60字，detail 30–180字，action 8–90字，使用完整句子。无需重复免责声明。
-输出结构：${JSON.stringify(LLM_OUTPUT_SCHEMA)}`;
+输出结构：${JSON.stringify(LLM_OUTPUT_SCHEMA)}
+自检：有 severity 必有 regions；null 须说明看不清；quality 与可判断项数一致；禁医疗/百分比/网感词。`;
 }
+
+/** Appended on automatic validation retry (system + user). */
+export const QWEN_RETRY_CONSTRAINT =
+  '严格输出符合 schema 的 JSON；禁止医疗诊断、准确率/百分比、网感词；每个有 severity 的分项必须带 regions；severity=null 时 observation 须说明看不清原因；quality 与可判断项数一致。';

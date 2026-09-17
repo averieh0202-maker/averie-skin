@@ -3,10 +3,17 @@
  */
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import type { AnalysisInput, CarePreferences, Gender } from '../../src/types/analysis';
-import { QWEN_SYSTEM_PROMPT, buildQwenUserPrompt } from '../../src/lib/llmSchema';
+import type { AnalysisInput, AnalysisResult, CarePreferences, Gender } from '../../src/types/analysis';
+import {
+  QWEN_RETRY_CONSTRAINT,
+  QWEN_SYSTEM_PROMPT,
+  buildQwenUserPrompt,
+} from '../../src/lib/llmSchema';
 import { mapLlmPayloadToResult, parseLlmJson } from '../../src/lib/mapLlmToResult';
-import { ReportValidationError } from '../../src/lib/reportValidation';
+import {
+  ReportValidationError,
+  validationErrorCode,
+} from '../../src/lib/reportValidation';
 
 type Env = {
   DASHSCOPE_API_KEY: string;
@@ -24,6 +31,7 @@ const COMPRESS_QUALITIES = [0.75, 0.7, 0.6] as const;
 const PROCESS_FAILED_MSG = '照片处理失败，请重拍一张正面照再试';
 const DASHSCOPE_TIMEOUT_MS = 120_000;
 const DASHSCOPE_TIMEOUT_MSG = '分析服务响应超时，请稍后重试';
+const REPORT_CHECK_FAILED_MSG = '报告内容未通过检查，请重新分析。';
 
 const ALLOWED_ORIGINS = new Set([
   'https://averieh0202-maker.github.io',
@@ -269,6 +277,149 @@ async function parseAnalyzeRequest(c: {
   };
 }
 
+function logValidationIssues(error: ReportValidationError) {
+  console.warn(
+    '[validate]',
+    JSON.stringify({
+      issues: error.issues.slice(0, 30),
+      count: error.issues.length,
+    }),
+  );
+}
+
+type DashScopeCallResult =
+  | { ok: true; content: string }
+  | { ok: false; status: number; error: string };
+
+async function callDashScope(
+  apiKey: string,
+  imageDataUrl: string,
+  userText: string,
+  systemPrompt: string,
+): Promise<DashScopeCallResult> {
+  const dashBody = {
+    model: QWEN_VL_MODEL,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      {
+        role: 'user',
+        content: [
+          { type: 'image_url', image_url: { url: imageDataUrl } },
+          { type: 'text', text: userText },
+        ],
+      },
+    ],
+    temperature: 0.2,
+    max_tokens: 6000,
+  };
+
+  const dashController = new AbortController();
+  const dashTimeout = setTimeout(() => dashController.abort(), DASHSCOPE_TIMEOUT_MS);
+  let res: Response;
+  let rawText: string;
+  try {
+    res = await fetch(`${DASHSCOPE_COMPAT_BASE}/chat/completions`, {
+      method: 'POST',
+      signal: dashController.signal,
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(dashBody),
+    });
+    rawText = await res.text();
+  } catch (error) {
+    const isAbort =
+      (error instanceof Error && error.name === 'AbortError') ||
+      (typeof error === 'object' &&
+        error !== null &&
+        'name' in error &&
+        (error as { name: string }).name === 'AbortError');
+    if (isAbort) {
+      return { ok: false, status: 504, error: DASHSCOPE_TIMEOUT_MSG };
+    }
+    return { ok: false, status: 502, error: '连接百炼超时或网络异常，请稍后重试。' };
+  } finally {
+    clearTimeout(dashTimeout);
+  }
+
+  if (!res.ok) {
+    let detail = '';
+    try {
+      const errJson = JSON.parse(rawText) as {
+        error?: { message?: string };
+        message?: string;
+      };
+      detail = errJson?.error?.message || errJson?.message || '';
+    } catch {
+      detail = rawText.slice(0, 160);
+    }
+    if (res.status === 401 || res.status === 403) {
+      return { ok: false, status: 502, error: '分析服务密钥无效或无权限' };
+    }
+    return {
+      ok: false,
+      status: 502,
+      error: detail
+        ? `百炼返回错误（${res.status}）：${detail}`
+        : `百炼返回错误（${res.status}）`,
+    };
+  }
+
+  let content: string | unknown = '';
+  try {
+    const json = JSON.parse(rawText) as {
+      choices?: Array<{ message?: { content?: unknown } }>;
+      output?: { choices?: Array<{ message?: { content?: unknown } }> };
+    };
+    content =
+      json?.choices?.[0]?.message?.content ??
+      json?.output?.choices?.[0]?.message?.content ??
+      '';
+    if (Array.isArray(content)) {
+      content = content
+        .map((item: { text?: string }) => item.text || '')
+        .join('\n');
+    }
+  } catch {
+    return { ok: false, status: 502, error: '百炼响应解析失败' };
+  }
+
+  if (!content || typeof content !== 'string') {
+    return { ok: false, status: 502, error: '模型未返回有效内容' };
+  }
+
+  return { ok: true, content };
+}
+
+/** DashScope → parseLlmJson → mapLlmPayloadToResult. Throws ReportValidationError on bad payload. */
+async function runAnalyzePipeline(
+  apiKey: string,
+  input: AnalysisInput,
+  imageDataUrl: string,
+  extraConstraint?: string,
+): Promise<AnalysisResult> {
+  const baseUser = buildQwenUserPrompt(input.age, genderZh(input.gender));
+  const userText = extraConstraint ? `${baseUser}\n${extraConstraint}` : baseUser;
+  const systemPrompt = extraConstraint
+    ? `${QWEN_SYSTEM_PROMPT}\n${extraConstraint}`
+    : QWEN_SYSTEM_PROMPT;
+
+  const dash = await callDashScope(apiKey, imageDataUrl, userText, systemPrompt);
+  if (!dash.ok) {
+    const err = new Error(dash.error) as Error & { httpStatus?: number };
+    err.httpStatus = dash.status;
+    throw err;
+  }
+
+  const payload = parseLlmJson(dash.content);
+  return mapLlmPayloadToResult(payload, input, {
+    engine: 'qwen',
+    model_id: QWEN_VL_MODEL,
+    market: 'cn',
+  });
+}
+
 const app = new Hono<{ Bindings: Env }>();
 
 app.use(
@@ -314,117 +465,57 @@ app.post('/analyze', async (c) => {
     preferences,
   };
 
-  const userText = buildQwenUserPrompt(input.age, genderZh(input.gender));
-  const dashBody = {
-    model: QWEN_VL_MODEL,
-    messages: [
-      { role: 'system', content: QWEN_SYSTEM_PROMPT },
-      {
-        role: 'user',
-        content: [
-          { type: 'image_url', image_url: { url: imageDataUrl } },
-          { type: 'text', text: userText },
-        ],
-      },
-    ],
-    temperature: 0.2,
-    max_tokens: 6000,
-  };
-
-  const dashController = new AbortController();
-  const dashTimeout = setTimeout(() => dashController.abort(), DASHSCOPE_TIMEOUT_MS);
-  let res: Response;
-  let rawText: string;
   try {
-    res = await fetch(`${DASHSCOPE_COMPAT_BASE}/chat/completions`, {
-      method: 'POST',
-      signal: dashController.signal,
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(dashBody),
-    });
-    rawText = await res.text();
-  } catch (error) {
-    const isAbort =
-      (error instanceof Error && error.name === 'AbortError') ||
-      (typeof error === 'object' &&
-        error !== null &&
-        'name' in error &&
-        (error as { name: string }).name === 'AbortError');
-    if (isAbort) {
-      return timedJson({ error: DASHSCOPE_TIMEOUT_MSG }, 504);
-    }
-    return timedJson({ error: '连接百炼超时或网络异常，请稍后重试。' }, 502);
-  } finally {
-    clearTimeout(dashTimeout);
-  }
-
-  if (!res.ok) {
-    let detail = '';
-    try {
-      const errJson = JSON.parse(rawText) as {
-        error?: { message?: string };
-        message?: string;
-      };
-      detail = errJson?.error?.message || errJson?.message || '';
-    } catch {
-      detail = rawText.slice(0, 160);
-    }
-    if (res.status === 401 || res.status === 403) {
-      return timedJson({ error: '分析服务密钥无效或无权限' }, 502);
-    }
-    return timedJson(
-      {
-        error: detail
-          ? `百炼返回错误（${res.status}）：${detail}`
-          : `百炼返回错误（${res.status}）`,
-      },
-      502,
-    );
-  }
-
-  let content: string | unknown = '';
-  try {
-    const json = JSON.parse(rawText) as {
-      choices?: Array<{ message?: { content?: unknown } }>;
-      output?: { choices?: Array<{ message?: { content?: unknown } }> };
-    };
-    content =
-      json?.choices?.[0]?.message?.content ??
-      json?.output?.choices?.[0]?.message?.content ??
-      '';
-    if (Array.isArray(content)) {
-      content = content
-        .map((item: { text?: string }) => item.text || '')
-        .join('\n');
-    }
-  } catch {
-    return timedJson({ error: '百炼响应解析失败' }, 502);
-  }
-
-  if (!content || typeof content !== 'string') {
-    return timedJson({ error: '模型未返回有效内容' }, 502);
-  }
-
-  let payload;
-  try {
-    payload = parseLlmJson(content);
+    const result = await runAnalyzePipeline(apiKey, input, imageDataUrl);
+    return timedJson({ result, usedEngine: 'qwen' as const });
   } catch (error) {
     if (error instanceof ReportValidationError) {
-      return timedJson({ error: '报告内容未通过检查，请重新分析。' }, 422);
+      logValidationIssues(error);
+      try {
+        const result = await runAnalyzePipeline(
+          apiKey,
+          input,
+          imageDataUrl,
+          QWEN_RETRY_CONSTRAINT,
+        );
+        return timedJson({ result, usedEngine: 'qwen' as const });
+      } catch (retryError) {
+        if (retryError instanceof ReportValidationError) {
+          logValidationIssues(retryError);
+          return timedJson(
+            {
+              error: REPORT_CHECK_FAILED_MSG,
+              code: validationErrorCode(retryError.issues),
+              retry: true,
+            },
+            422,
+          );
+        }
+        const httpStatus =
+          retryError instanceof Error &&
+          'httpStatus' in retryError &&
+          typeof (retryError as { httpStatus?: number }).httpStatus === 'number'
+            ? (retryError as { httpStatus: number }).httpStatus
+            : 502;
+        const msg =
+          retryError instanceof Error ? retryError.message : '分析失败，请稍后重试';
+        return timedJson({ error: msg }, httpStatus as 502);
+      }
     }
+
+    if (
+      error instanceof Error &&
+      'httpStatus' in error &&
+      typeof (error as { httpStatus?: number }).httpStatus === 'number'
+    ) {
+      return timedJson(
+        { error: error.message },
+        (error as { httpStatus: number }).httpStatus as 502,
+      );
+    }
+
     return timedJson({ error: '报告内容无法读取，请重新分析。' }, 422);
   }
-
-  const result = mapLlmPayloadToResult(payload, input, {
-    engine: 'qwen',
-    model_id: QWEN_VL_MODEL,
-    market: 'cn',
-  });
-
-  return timedJson({ result, usedEngine: 'qwen' as const });
 });
 
 app.all('*', (c) => c.json({ error: 'Not found' }, 404));

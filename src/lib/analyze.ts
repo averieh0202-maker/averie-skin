@@ -72,7 +72,12 @@ async function analyzeViaApi(input: AnalysisInput): Promise<AnalysisResult> {
     clearTimeout(timeout);
   }
 
-  let parsed: { result?: AnalysisResult; error?: string } = {};
+  let parsed: {
+    result?: AnalysisResult;
+    error?: string;
+    code?: string;
+    retry?: boolean;
+  } = {};
   try {
     parsed = JSON.parse(rawText);
   } catch {
@@ -82,6 +87,12 @@ async function analyzeViaApi(input: AnalysisInput): Promise<AnalysisResult> {
   }
 
   if (!res.ok) {
+    if (parsed.code) {
+      throw new QwenAnalyzeError(
+        `报告内容未通过检查（${parsed.code}），请再试一次。`,
+        { code: parsed.code, retry: parsed.retry },
+      );
+    }
     // Prefer server error text for 502/504 and other statuses.
     throw new QwenAnalyzeError(
       parsed.error?.trim() || `分析服务错误（${res.status}）`,

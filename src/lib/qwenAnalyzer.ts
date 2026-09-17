@@ -4,9 +4,16 @@
  */
 import { AnalysisInput, AnalysisResult, Gender } from '../types/analysis';
 import { DASHSCOPE_COMPAT_BASE, QWEN_VL_MODEL, getDashScopeApiKey } from './config';
-import { QWEN_SYSTEM_PROMPT, buildQwenUserPrompt } from './llmSchema';
+import {
+  QWEN_RETRY_CONSTRAINT,
+  QWEN_SYSTEM_PROMPT,
+  buildQwenUserPrompt,
+} from './llmSchema';
 import { mapLlmPayloadToResult, parseLlmJson } from './mapLlmToResult';
-import { ReportValidationError } from './reportValidation';
+import {
+  ReportValidationError,
+  validationErrorCode,
+} from './reportValidation';
 import { MAX_IMAGE_DATA_URL_LENGTH, prepareImageDataUrl } from './imageDataUrl';
 
 function genderZh(g: Gender): string {
@@ -21,42 +28,29 @@ function genderZh(g: Gender): string {
 }
 
 export class QwenAnalyzeError extends Error {
-  constructor(message: string) {
+  code?: string;
+  retry?: boolean;
+  constructor(
+    message: string,
+    opts?: { code?: string; retry?: boolean },
+  ) {
     super(message);
     this.name = 'QwenAnalyzeError';
+    this.code = opts?.code;
+    this.retry = opts?.retry;
   }
 }
 
-/**
- * Call DashScope OpenAI-compatible chat completions with qwen3-vl-plus.
- */
-export async function analyzeWithQwen(input: AnalysisInput): Promise<AnalysisResult> {
-  const apiKey = getDashScopeApiKey();
-  if (!apiKey) {
-    throw new QwenAnalyzeError('未配置 DashScope API Key，请检查本地 .env');
-  }
-
-  let imageRef: string;
-  try {
-    imageRef = await prepareImageDataUrl(input.imageUri);
-  } catch (err) {
-    if (err instanceof Error && err.message === 'IMAGE_PROCESS_FAILED') {
-      throw new QwenAnalyzeError('照片处理失败，请重拍一张正面照再试');
-    }
-    throw new QwenAnalyzeError('无法读取自拍图片，请重拍或换一张再试');
-  }
-
-  // After silent compress, still over cap → friendly retake message (never ask to pick a smaller file).
-  if (imageRef.startsWith('data:') && imageRef.length > MAX_IMAGE_DATA_URL_LENGTH) {
-    throw new QwenAnalyzeError('照片处理失败，请重拍一张正面照再试');
-  }
-
-  const userText = buildQwenUserPrompt(input.age, genderZh(input.gender));
-
+async function callDashScopeContent(
+  apiKey: string,
+  imageRef: string,
+  userText: string,
+  systemPrompt: string,
+): Promise<string> {
   const body = {
     model: QWEN_VL_MODEL,
     messages: [
-      { role: 'system', content: QWEN_SYSTEM_PROMPT },
+      { role: 'system', content: systemPrompt },
       {
         role: 'user',
         content: [
@@ -127,19 +121,99 @@ export async function analyzeWithQwen(input: AnalysisInput): Promise<AnalysisRes
   if (!content || typeof content !== 'string') {
     throw new QwenAnalyzeError('模型未返回有效内容');
   }
+  return content;
+}
 
-  let payload;
-  try {
-    payload = parseLlmJson(content);
-  } catch (error) {
-    if (error instanceof ReportValidationError)
-      throw new QwenAnalyzeError('报告内容未通过检查，请重新分析。');
-    throw new QwenAnalyzeError('报告内容无法读取，请重新分析。');
-  }
-
+function runParseAndMap(
+  content: string,
+  input: AnalysisInput,
+): AnalysisResult {
+  const payload = parseLlmJson(content);
   return mapLlmPayloadToResult(payload, input, {
     engine: 'qwen',
     model_id: QWEN_VL_MODEL,
     market: 'cn',
   });
+}
+
+function throwValidationToUser(error: ReportValidationError): never {
+  const code = validationErrorCode(error.issues);
+  throw new QwenAnalyzeError(`报告内容未通过检查（${code}），请再试一次。`, {
+    code,
+    retry: true,
+  });
+}
+
+/**
+ * Call DashScope OpenAI-compatible chat completions with qwen3-vl-plus.
+ * Retries once with a stricter constraint on ReportValidationError.
+ */
+export async function analyzeWithQwen(input: AnalysisInput): Promise<AnalysisResult> {
+  const apiKey = getDashScopeApiKey();
+  if (!apiKey) {
+    throw new QwenAnalyzeError('未配置 DashScope API Key，请检查本地 .env');
+  }
+
+  let imageRef: string;
+  try {
+    imageRef = await prepareImageDataUrl(input.imageUri);
+  } catch (err) {
+    if (err instanceof Error && err.message === 'IMAGE_PROCESS_FAILED') {
+      throw new QwenAnalyzeError('照片处理失败，请重拍一张正面照再试');
+    }
+    throw new QwenAnalyzeError('无法读取自拍图片，请重拍或换一张再试');
+  }
+
+  // After silent compress, still over cap → friendly retake message (never ask to pick a smaller file).
+  if (imageRef.startsWith('data:') && imageRef.length > MAX_IMAGE_DATA_URL_LENGTH) {
+    throw new QwenAnalyzeError('照片处理失败，请重拍一张正面照再试');
+  }
+
+  const baseUser = buildQwenUserPrompt(input.age, genderZh(input.gender));
+
+  try {
+    const content = await callDashScopeContent(
+      apiKey,
+      imageRef,
+      baseUser,
+      QWEN_SYSTEM_PROMPT,
+    );
+    return runParseAndMap(content, input);
+  } catch (error) {
+    if (!(error instanceof ReportValidationError)) throw error;
+
+    if (typeof console !== 'undefined' && console.warn) {
+      console.warn(
+        '[validate]',
+        JSON.stringify({
+          issues: error.issues.slice(0, 30),
+          count: error.issues.length,
+        }),
+      );
+    }
+
+    try {
+      const content = await callDashScopeContent(
+        apiKey,
+        imageRef,
+        `${baseUser}\n${QWEN_RETRY_CONSTRAINT}`,
+        `${QWEN_SYSTEM_PROMPT}\n${QWEN_RETRY_CONSTRAINT}`,
+      );
+      return runParseAndMap(content, input);
+    } catch (retryError) {
+      if (retryError instanceof ReportValidationError) {
+        if (typeof console !== 'undefined' && console.warn) {
+          console.warn(
+            '[validate]',
+            JSON.stringify({
+              issues: retryError.issues.slice(0, 30),
+              count: retryError.issues.length,
+            }),
+          );
+        }
+        throwValidationToUser(retryError);
+      }
+      throw retryError;
+    }
+  }
 }

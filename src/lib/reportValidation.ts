@@ -7,6 +7,22 @@ export class ReportValidationError extends Error {
     this.name = 'ReportValidationError';
   }
 }
+
+export type ValidationErrorCode = 'fields' | 'copy' | 'consistency' | 'json';
+
+/** Map validator issue strings to a user-facing reason code (no raw issues to the client). */
+export function validationErrorCode(issues: string[]): ValidationErrorCode {
+  const joined = issues.join(' | ');
+  if (/invalid JSON/i.test(joined)) return 'json';
+  // copy / consistency before fields so "missing region evidence" is not mis-tagged as fields
+  if (/unreadable copy|unsupported claim|: length/i.test(joined)) return 'copy';
+  if (/quality|tendency|region|severity|unassessed|inconsistent/i.test(joined))
+    return 'consistency';
+  if (/missing|unexpected|enum|const|: object|: string|: array|: items/i.test(joined))
+    return 'fields';
+  return 'consistency';
+}
+
 export function validatePayload(value: unknown): LlmAnalysisPayload {
   const issues: string[] = [];
   function walk(v: any, s: any, path: string) {
@@ -31,8 +47,9 @@ export function validatePayload(value: unknown): LlmAnalysisPayload {
       }
       if (v.trim().length < s.minLength || v.length > s.maxLength)
         issues.push(`${path}: length`);
+      // Marketing / jargon markers only — avoid matching ordinary Chinese phrasing.
       if (
-        /[·•→➡]|https?:\/\/|主画面|偏哑|微光|光膜|柔和光泽|油脂光泽密度|很乖|抢戏|玻璃肌|开趴|所见[：:]|护理方向[：:]/i.test(
+        /[·•→➡]|https?:\/\/|主画面|平滑偏哑|微光泛油|微光|光膜|柔和光泽|油脂光泽密度|很乖|抢戏|玻璃肌|开趴|所见[：:]|护理方向[：:]/i.test(
           v,
         )
       )
