@@ -7,7 +7,10 @@ import {
   hasAnalyzeApi,
   hasDashScopeKey,
 } from './config';
-import { MAX_IMAGE_DATA_URL_LENGTH, prepareImageDataUrl } from './imageDataUrl';
+import {
+  MAX_IMAGE_BLOB_BYTES,
+  prepareImageJpegBlob,
+} from './imageDataUrl';
 
 export type AnalyzeOutcome = {
   result: AnalysisResult;
@@ -16,38 +19,55 @@ export type AnalyzeOutcome = {
 
 async function analyzeViaApi(input: AnalysisInput): Promise<AnalysisResult> {
   const base = getAnalyzeApiUrl();
-  let imageDataUrl: string;
+  let imageBlob: Blob;
   try {
-    imageDataUrl = await prepareImageDataUrl(input.imageUri);
+    imageBlob = await prepareImageJpegBlob(input.imageUri);
   } catch (err) {
     if (err instanceof Error && err.message === 'IMAGE_PROCESS_FAILED') {
       throw new QwenAnalyzeError('照片处理失败，请重拍一张正面照再试');
     }
     throw new QwenAnalyzeError('无法读取自拍图片，请重拍或换一张再试');
   }
-  if (imageDataUrl.startsWith('data:') && imageDataUrl.length > MAX_IMAGE_DATA_URL_LENGTH) {
+  if (imageBlob.size > MAX_IMAGE_BLOB_BYTES) {
     throw new QwenAnalyzeError('照片处理失败，请重拍一张正面照再试');
   }
 
+  const form = new FormData();
+  form.append('image', imageBlob, 'selfie.jpg');
+  form.append(
+    'meta',
+    JSON.stringify({
+      gender: input.gender,
+      age: input.age,
+      preferences: input.preferences,
+    }),
+  );
+
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 90000);
+  const timeout = setTimeout(() => controller.abort(), 180_000);
   let res: Response;
   let rawText: string;
   try {
     res = await fetch(`${base}/analyze`, {
       method: 'POST',
       signal: controller.signal,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        gender: input.gender,
-        age: input.age,
-        imageDataUrl,
-        preferences: input.preferences,
-      }),
+      // Do not set Content-Type — browser/RN sets multipart boundary.
+      body: form,
     });
     rawText = await res.text();
-  } catch {
-    throw new QwenAnalyzeError('连接超时或网络异常，请稍后重试。');
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new QwenAnalyzeError(
+        '分析超时，请换稳定网络后重试（通常需 1–2 分钟）',
+      );
+    }
+    if (
+      error instanceof TypeError ||
+      (error instanceof Error && /failed to fetch/i.test(error.message))
+    ) {
+      throw new QwenAnalyzeError('网络异常，请检查网络后重试');
+    }
+    throw new QwenAnalyzeError('请求失败，请稍后重试');
   } finally {
     clearTimeout(timeout);
   }
@@ -62,6 +82,7 @@ async function analyzeViaApi(input: AnalysisInput): Promise<AnalysisResult> {
   }
 
   if (!res.ok) {
+    // Prefer server error text for 502/504 and other statuses.
     throw new QwenAnalyzeError(
       parsed.error?.trim() || `分析服务错误（${res.status}）`,
     );

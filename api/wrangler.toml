@@ -2,6 +2,14 @@ name = "averie-skin-api"
 main = "src/index.ts"
 compatibility_date = "2026-09-16"
 
+# Place Worker near upstream (DashScope) when traffic patterns allow.
+[placement]
+mode = "smart"
+
+# Paid Workers default is 30s; raise toward account max if plan allows.
+[limits]
+cpu_ms = 30000
+
 # Required at runtime; set via `wrangler secret put` or deploy --secrets-file.
 # Never commit real key values.
 [vars]

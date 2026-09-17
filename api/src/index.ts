@@ -18,9 +18,12 @@ const DASHSCOPE_COMPAT_BASE = 'https://dashscope.aliyuncs.com/compatible-mode/v1
 const MAX_IMAGE_DATA_URL_LENGTH = 1_800_000;
 /** Accept larger incoming data URLs so we can compress as a server-side fallback. */
 const MAX_INCOMING_DATA_URL_LENGTH = 6_000_000;
-const COMPRESS_MAX_EDGES = [1600, 1400, 1280, 1024] as const;
-const COMPRESS_QUALITIES = [0.85, 0.75, 0.7, 0.6] as const;
+const MAX_INCOMING_BLOB_BYTES = 4_500_000;
+const COMPRESS_MAX_EDGES = [1280, 1152, 1024] as const;
+const COMPRESS_QUALITIES = [0.75, 0.7, 0.6] as const;
 const PROCESS_FAILED_MSG = '照片处理失败，请重拍一张正面照再试';
+const DASHSCOPE_TIMEOUT_MS = 120_000;
+const DASHSCOPE_TIMEOUT_MSG = '分析服务响应超时，请稍后重试';
 
 const ALLOWED_ORIGINS = new Set([
   'https://averieh0202-maker.github.io',
@@ -141,6 +144,131 @@ async function prepareIncomingDataUrl(dataUrl: string): Promise<string | null> {
   return best.length <= MAX_IMAGE_DATA_URL_LENGTH ? best : null;
 }
 
+type AnalyzeFields = {
+  gender: Gender;
+  age: number;
+  imageDataUrl: string;
+  preferences?: CarePreferences;
+};
+
+async function parseAnalyzeRequest(c: {
+  req: {
+    header: (name: string) => string | undefined;
+    json: () => Promise<unknown>;
+    parseBody: (options?: { all?: boolean }) => Promise<Record<string, unknown>>;
+  };
+}): Promise<{ ok: true; fields: AnalyzeFields } | { ok: false; error: string; status: 400 }> {
+  const contentType = c.req.header('content-type') || '';
+
+  let gender: unknown;
+  let age: unknown;
+  let preferences: CarePreferences | undefined;
+  let rawImage: string | undefined;
+
+  if (contentType.includes('multipart/form-data')) {
+    let body: Record<string, unknown>;
+    try {
+      body = await c.req.parseBody({ all: true });
+    } catch {
+      return { ok: false, error: '无法解析 multipart 请求', status: 400 };
+    }
+
+    const metaRaw = body['meta'];
+    let meta: Record<string, unknown> = {};
+    if (typeof metaRaw === 'string') {
+      try {
+        meta = JSON.parse(metaRaw) as Record<string, unknown>;
+      } catch {
+        return { ok: false, error: 'meta 必须是合法 JSON', status: 400 };
+      }
+    } else if (metaRaw && typeof metaRaw === 'object') {
+      meta = metaRaw as Record<string, unknown>;
+    } else {
+      // Also accept flat fields for robustness
+      meta = {
+        gender: body['gender'],
+        age: body['age'] != null ? Number(body['age']) : undefined,
+        preferences: body['preferences'],
+      };
+    }
+
+    gender = meta.gender;
+    age = typeof meta.age === 'string' ? Number(meta.age) : meta.age;
+    preferences = meta.preferences as CarePreferences | undefined;
+
+    const imagePart = body['image'];
+    if (imagePart instanceof File || (imagePart && typeof imagePart === 'object' && 'arrayBuffer' in (imagePart as object))) {
+      const file = imagePart as File;
+      if (file.size > MAX_INCOMING_BLOB_BYTES) {
+        return { ok: false, error: PROCESS_FAILED_MSG, status: 400 };
+      }
+      const buf = new Uint8Array(await file.arrayBuffer());
+      const mime = (file.type && file.type.startsWith('image/')) ? file.type : 'image/jpeg';
+      rawImage = bytesToDataUrl(buf, mime);
+    } else if (typeof imagePart === 'string' && imagePart.startsWith('data:image')) {
+      rawImage = imagePart;
+    } else {
+      return { ok: false, error: 'multipart 须包含 image 文件字段', status: 400 };
+    }
+  } else {
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return { ok: false, error: '请求体必须是 JSON 或 multipart/form-data', status: 400 };
+    }
+
+    if (!body || typeof body !== 'object') {
+      return { ok: false, error: '请求体无效', status: 400 };
+    }
+
+    const b = body as {
+      gender?: unknown;
+      age?: unknown;
+      imageDataUrl?: unknown;
+      preferences?: CarePreferences;
+    };
+    gender = b.gender;
+    age = b.age;
+    preferences = b.preferences;
+    if (typeof b.imageDataUrl === 'string') {
+      rawImage = b.imageDataUrl;
+    }
+  }
+
+  if (typeof gender !== 'string' || !GENDERS.has(gender as Gender)) {
+    return { ok: false, error: 'gender 必填且须为 female | male | unspecified', status: 400 };
+  }
+  if (typeof age !== 'number' || !Number.isFinite(age) || age < 13 || age > 99) {
+    return { ok: false, error: 'age 必填且须为 13–99 的整数', status: 400 };
+  }
+  if (typeof rawImage !== 'string' || !rawImage.startsWith('data:image')) {
+    return { ok: false, error: '图片必须是 data:image… 或 multipart image 文件', status: 400 };
+  }
+  if (rawImage.length > MAX_INCOMING_DATA_URL_LENGTH) {
+    return { ok: false, error: PROCESS_FAILED_MSG, status: 400 };
+  }
+
+  let imageDataUrl = rawImage;
+  if (imageDataUrl.length > MAX_IMAGE_DATA_URL_LENGTH) {
+    const prepared = await prepareIncomingDataUrl(imageDataUrl);
+    if (!prepared) {
+      return { ok: false, error: PROCESS_FAILED_MSG, status: 400 };
+    }
+    imageDataUrl = prepared;
+  }
+
+  return {
+    ok: true,
+    fields: {
+      gender: gender as Gender,
+      age: Math.floor(age),
+      imageDataUrl,
+      preferences,
+    },
+  };
+}
+
 const app = new Hono<{ Bindings: Env }>();
 
 app.use(
@@ -152,6 +280,7 @@ app.use(
     },
     allowMethods: ['GET', 'POST', 'OPTIONS'],
     allowHeaders: ['Content-Type'],
+    exposeHeaders: ['X-Analyze-Ms'],
     maxAge: 86400,
   }),
 );
@@ -159,54 +288,28 @@ app.use(
 app.get('/health', (c) => c.json({ ok: true, model: QWEN_VL_MODEL }));
 
 app.post('/analyze', async (c) => {
-  let body: unknown;
-  try {
-    body = await c.req.json();
-  } catch {
-    return c.json({ error: '请求体必须是 JSON' }, 400);
-  }
-
-  if (!body || typeof body !== 'object') {
-    return c.json({ error: '请求体无效' }, 400);
-  }
-
-  const { gender, age, imageDataUrl: rawImage, preferences } = body as {
-    gender?: unknown;
-    age?: unknown;
-    imageDataUrl?: unknown;
-    preferences?: CarePreferences;
+  const t0 = Date.now();
+  const timedJson = (body: unknown, status?: number) => {
+    c.header('X-Analyze-Ms', String(Date.now() - t0));
+    if (status == null) return c.json(body);
+    return c.json(body, status as 400);
   };
 
-  if (typeof gender !== 'string' || !GENDERS.has(gender as Gender)) {
-    return c.json({ error: 'gender 必填且须为 female | male | unspecified' }, 400);
-  }
-  if (typeof age !== 'number' || !Number.isFinite(age) || age < 13 || age > 99) {
-    return c.json({ error: 'age 必填且须为 13–99 的整数' }, 400);
-  }
-  if (typeof rawImage !== 'string' || !rawImage.startsWith('data:image')) {
-    return c.json({ error: 'imageDataUrl 必须是 data:image… 格式' }, 400);
-  }
-  if (rawImage.length > MAX_INCOMING_DATA_URL_LENGTH) {
-    return c.json({ error: PROCESS_FAILED_MSG }, 400);
+  const parsedReq = await parseAnalyzeRequest(c);
+  if (!parsedReq.ok) {
+    return timedJson({ error: parsedReq.error }, parsedReq.status);
   }
 
-  let imageDataUrl = rawImage;
-  if (imageDataUrl.length > MAX_IMAGE_DATA_URL_LENGTH) {
-    const prepared = await prepareIncomingDataUrl(imageDataUrl);
-    if (!prepared) {
-      return c.json({ error: PROCESS_FAILED_MSG }, 400);
-    }
-    imageDataUrl = prepared;
-  }
+  const { gender, age, imageDataUrl, preferences } = parsedReq.fields;
 
   const apiKey = c.env.DASHSCOPE_API_KEY?.trim();
   if (!apiKey) {
-    return c.json({ error: '分析服务尚未配置密钥' }, 500);
+    return timedJson({ error: '分析服务尚未配置密钥' }, 500);
   }
 
   const input: AnalysisInput = {
-    gender: gender as Gender,
-    age: Math.floor(age),
+    gender,
+    age,
     imageUri: imageDataUrl,
     preferences,
   };
@@ -228,11 +331,14 @@ app.post('/analyze', async (c) => {
     max_tokens: 6000,
   };
 
+  const dashController = new AbortController();
+  const dashTimeout = setTimeout(() => dashController.abort(), DASHSCOPE_TIMEOUT_MS);
   let res: Response;
   let rawText: string;
   try {
     res = await fetch(`${DASHSCOPE_COMPAT_BASE}/chat/completions`, {
       method: 'POST',
+      signal: dashController.signal,
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
@@ -240,8 +346,19 @@ app.post('/analyze', async (c) => {
       body: JSON.stringify(dashBody),
     });
     rawText = await res.text();
-  } catch {
-    return c.json({ error: '连接百炼超时或网络异常，请稍后重试。' }, 502);
+  } catch (error) {
+    const isAbort =
+      (error instanceof Error && error.name === 'AbortError') ||
+      (typeof error === 'object' &&
+        error !== null &&
+        'name' in error &&
+        (error as { name: string }).name === 'AbortError');
+    if (isAbort) {
+      return timedJson({ error: DASHSCOPE_TIMEOUT_MSG }, 504);
+    }
+    return timedJson({ error: '连接百炼超时或网络异常，请稍后重试。' }, 502);
+  } finally {
+    clearTimeout(dashTimeout);
   }
 
   if (!res.ok) {
@@ -256,9 +373,9 @@ app.post('/analyze', async (c) => {
       detail = rawText.slice(0, 160);
     }
     if (res.status === 401 || res.status === 403) {
-      return c.json({ error: '分析服务密钥无效或无权限' }, 502);
+      return timedJson({ error: '分析服务密钥无效或无权限' }, 502);
     }
-    return c.json(
+    return timedJson(
       {
         error: detail
           ? `百炼返回错误（${res.status}）：${detail}`
@@ -284,11 +401,11 @@ app.post('/analyze', async (c) => {
         .join('\n');
     }
   } catch {
-    return c.json({ error: '百炼响应解析失败' }, 502);
+    return timedJson({ error: '百炼响应解析失败' }, 502);
   }
 
   if (!content || typeof content !== 'string') {
-    return c.json({ error: '模型未返回有效内容' }, 502);
+    return timedJson({ error: '模型未返回有效内容' }, 502);
   }
 
   let payload;
@@ -296,9 +413,9 @@ app.post('/analyze', async (c) => {
     payload = parseLlmJson(content);
   } catch (error) {
     if (error instanceof ReportValidationError) {
-      return c.json({ error: '报告内容未通过检查，请重新分析。' }, 422);
+      return timedJson({ error: '报告内容未通过检查，请重新分析。' }, 422);
     }
-    return c.json({ error: '报告内容无法读取，请重新分析。' }, 422);
+    return timedJson({ error: '报告内容无法读取，请重新分析。' }, 422);
   }
 
   const result = mapLlmPayloadToResult(payload, input, {
@@ -307,7 +424,7 @@ app.post('/analyze', async (c) => {
     market: 'cn',
   });
 
-  return c.json({ result, usedEngine: 'qwen' as const });
+  return timedJson({ result, usedEngine: 'qwen' as const });
 });
 
 app.all('*', (c) => c.json({ error: 'Not found' }, 404));

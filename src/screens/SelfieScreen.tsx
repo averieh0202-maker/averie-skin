@@ -70,7 +70,9 @@ export function SelfieScreen({ navigation }: Props) {
       await runAnalysis({ imageUri: uri });
       navigation.replace('FreeResult');
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : '请稍后重试。');
+      const msg = error instanceof Error ? error.message : '请稍后重试。';
+      setErrorMessage(msg);
+      Alert.alert('分析失败', msg);
     } finally {
       setBusy(false);
     }
@@ -139,6 +141,11 @@ export function SelfieScreen({ navigation }: Props) {
         </View>
 
         <View style={styles.spacer} />
+        {busy ? (
+          <Text style={styles.busyHint}>
+            分析中，约需 30–90 秒，请保持屏幕常亮与网络畅通…
+          </Text>
+        ) : null}
         <PrimaryButton
           label={busy ? '分析中…' : '开始分析'}
           disabled={!uri}
@@ -223,4 +230,11 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 10 },
   half: { flex: 1 },
   spacer: { flex: 1, minHeight: 20 },
+  busyHint: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 20,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
 });
