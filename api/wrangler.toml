@@ -6,9 +6,8 @@ compatibility_date = "2026-09-16"
 [placement]
 mode = "smart"
 
-# Paid Workers default is 30s; raise toward account max if plan allows.
-[limits]
-cpu_ms = 30000
+# [limits] cpu_ms not supported on Cloudflare Free plan (code 100328).
+# Raise when the account is on Workers Paid (default 30s, max 300000).
 
 # Required at runtime; set via `wrangler secret put` or deploy --secrets-file.
 # Never commit real key values.
