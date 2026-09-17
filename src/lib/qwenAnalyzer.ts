@@ -7,7 +7,7 @@ import { DASHSCOPE_COMPAT_BASE, QWEN_VL_MODEL, getDashScopeApiKey } from './conf
 import { QWEN_SYSTEM_PROMPT, buildQwenUserPrompt } from './llmSchema';
 import { mapLlmPayloadToResult, parseLlmJson } from './mapLlmToResult';
 import { ReportValidationError } from './reportValidation';
-import { MAX_IMAGE_DATA_URL_LENGTH, imageUriToDataUrl } from './imageDataUrl';
+import { MAX_IMAGE_DATA_URL_LENGTH, prepareImageDataUrl } from './imageDataUrl';
 
 function genderZh(g: Gender): string {
   switch (g) {
@@ -38,14 +38,17 @@ export async function analyzeWithQwen(input: AnalysisInput): Promise<AnalysisRes
 
   let imageRef: string;
   try {
-    imageRef = await imageUriToDataUrl(input.imageUri);
-  } catch {
+    imageRef = await prepareImageDataUrl(input.imageUri);
+  } catch (err) {
+    if (err instanceof Error && err.message === 'IMAGE_PROCESS_FAILED') {
+      throw new QwenAnalyzeError('照片处理失败，请重拍一张正面照再试');
+    }
     throw new QwenAnalyzeError('无法读取自拍图片，请重拍或换一张再试');
   }
 
-  // Reject oversized payloads; never truncate image data.
+  // After silent compress, still over cap → friendly retake message (never ask to pick a smaller file).
   if (imageRef.startsWith('data:') && imageRef.length > MAX_IMAGE_DATA_URL_LENGTH) {
-    throw new QwenAnalyzeError('图片过大，请换一张更小的自拍后再试');
+    throw new QwenAnalyzeError('照片处理失败，请重拍一张正面照再试');
   }
 
   const userText = buildQwenUserPrompt(input.age, genderZh(input.gender));

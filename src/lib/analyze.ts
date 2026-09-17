@@ -7,7 +7,7 @@ import {
   hasAnalyzeApi,
   hasDashScopeKey,
 } from './config';
-import { MAX_IMAGE_DATA_URL_LENGTH, imageUriToDataUrl } from './imageDataUrl';
+import { MAX_IMAGE_DATA_URL_LENGTH, prepareImageDataUrl } from './imageDataUrl';
 
 export type AnalyzeOutcome = {
   result: AnalysisResult;
@@ -18,12 +18,15 @@ async function analyzeViaApi(input: AnalysisInput): Promise<AnalysisResult> {
   const base = getAnalyzeApiUrl();
   let imageDataUrl: string;
   try {
-    imageDataUrl = await imageUriToDataUrl(input.imageUri);
-  } catch {
+    imageDataUrl = await prepareImageDataUrl(input.imageUri);
+  } catch (err) {
+    if (err instanceof Error && err.message === 'IMAGE_PROCESS_FAILED') {
+      throw new QwenAnalyzeError('照片处理失败，请重拍一张正面照再试');
+    }
     throw new QwenAnalyzeError('无法读取自拍图片，请重拍或换一张再试');
   }
   if (imageDataUrl.startsWith('data:') && imageDataUrl.length > MAX_IMAGE_DATA_URL_LENGTH) {
-    throw new QwenAnalyzeError('图片过大，请换一张更小的自拍后再试');
+    throw new QwenAnalyzeError('照片处理失败，请重拍一张正面照再试');
   }
 
   const controller = new AbortController();

@@ -14,7 +14,14 @@ type Env = {
 
 const QWEN_VL_MODEL = 'qwen3-vl-plus';
 const DASHSCOPE_COMPAT_BASE = 'https://dashscope.aliyuncs.com/compatible-mode/v1';
+/** Final payload cap sent to DashScope (matches client). */
 const MAX_IMAGE_DATA_URL_LENGTH = 1_800_000;
+/** Accept larger incoming data URLs so we can compress as a server-side fallback. */
+const MAX_INCOMING_DATA_URL_LENGTH = 6_000_000;
+const COMPRESS_MAX_EDGES = [1600, 1400, 1280, 1024] as const;
+const COMPRESS_QUALITIES = [0.85, 0.75, 0.7, 0.6] as const;
+const PROCESS_FAILED_MSG = '照片处理失败，请重拍一张正面照再试';
+
 const ALLOWED_ORIGINS = new Set([
   'https://averieh0202-maker.github.io',
   'http://localhost:8081',
@@ -31,6 +38,107 @@ function genderZh(g: Gender): string {
     default:
       return '不愿说明';
   }
+}
+
+function dataUrlToBlob(dataUrl: string): Blob | null {
+  const m = /^data:([^;,]+)?(?:;[^,]*)?;base64,(.+)$/s.exec(dataUrl);
+  if (!m) return null;
+  const mime = m[1] || 'image/jpeg';
+  const b64 = m[2];
+  try {
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], { type: mime });
+  } catch {
+    return null;
+  }
+}
+
+function bytesToDataUrl(bytes: Uint8Array, mime: string): string {
+  const chunk = 0x8000;
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return `data:${mime};base64,${btoa(binary)}`;
+}
+
+/**
+ * Worker fallback compress via createImageBitmap + OffscreenCanvas when available.
+ * Returns null if runtime lacks canvas APIs or compression fails.
+ */
+async function compressWithOffscreen(
+  dataUrl: string,
+  maxEdge: number,
+  quality: number,
+): Promise<string | null> {
+  try {
+    // DOM canvas APIs are optional on Workers; cast loosely for @cloudflare/workers-types.
+    const g = globalThis as unknown as {
+      createImageBitmap?: (image: Blob) => Promise<{
+        width: number;
+        height: number;
+        close: () => void;
+      }>;
+      OffscreenCanvas?: new (
+        width: number,
+        height: number,
+      ) => {
+        getContext: (type: '2d') => {
+          drawImage: (
+            image: unknown,
+            dx: number,
+            dy: number,
+            dw: number,
+            dh: number,
+          ) => void;
+        } | null;
+        convertToBlob: (options: {
+          type?: string;
+          quality?: number;
+        }) => Promise<Blob>;
+      };
+    };
+    if (typeof g.createImageBitmap !== 'function' || typeof g.OffscreenCanvas === 'undefined') {
+      return null;
+    }
+    const blob = dataUrlToBlob(dataUrl);
+    if (!blob) return null;
+    const bitmap = await g.createImageBitmap(blob);
+    const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
+    const w = Math.max(1, Math.round(bitmap.width * scale));
+    const h = Math.max(1, Math.round(bitmap.height * scale));
+    const canvas = new g.OffscreenCanvas(w, h);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      bitmap.close();
+      return null;
+    }
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    bitmap.close();
+    const outBlob = await canvas.convertToBlob({ type: 'image/jpeg', quality });
+    const buf = new Uint8Array(await outBlob.arrayBuffer());
+    return bytesToDataUrl(buf, 'image/jpeg');
+  } catch {
+    return null;
+  }
+}
+
+async function prepareIncomingDataUrl(dataUrl: string): Promise<string | null> {
+  if (dataUrl.length <= MAX_IMAGE_DATA_URL_LENGTH) return dataUrl;
+
+  let best = dataUrl;
+  for (let i = 0; i < COMPRESS_MAX_EDGES.length; i++) {
+    const next = await compressWithOffscreen(
+      dataUrl,
+      COMPRESS_MAX_EDGES[i],
+      COMPRESS_QUALITIES[i],
+    );
+    if (next && next.length < best.length) best = next;
+    if (best.length <= MAX_IMAGE_DATA_URL_LENGTH) return best;
+  }
+  return best.length <= MAX_IMAGE_DATA_URL_LENGTH ? best : null;
 }
 
 const app = new Hono<{ Bindings: Env }>();
@@ -62,7 +170,7 @@ app.post('/analyze', async (c) => {
     return c.json({ error: '请求体无效' }, 400);
   }
 
-  const { gender, age, imageDataUrl, preferences } = body as {
+  const { gender, age, imageDataUrl: rawImage, preferences } = body as {
     gender?: unknown;
     age?: unknown;
     imageDataUrl?: unknown;
@@ -75,11 +183,20 @@ app.post('/analyze', async (c) => {
   if (typeof age !== 'number' || !Number.isFinite(age) || age < 13 || age > 99) {
     return c.json({ error: 'age 必填且须为 13–99 的整数' }, 400);
   }
-  if (typeof imageDataUrl !== 'string' || !imageDataUrl.startsWith('data:image')) {
+  if (typeof rawImage !== 'string' || !rawImage.startsWith('data:image')) {
     return c.json({ error: 'imageDataUrl 必须是 data:image… 格式' }, 400);
   }
+  if (rawImage.length > MAX_INCOMING_DATA_URL_LENGTH) {
+    return c.json({ error: PROCESS_FAILED_MSG }, 400);
+  }
+
+  let imageDataUrl = rawImage;
   if (imageDataUrl.length > MAX_IMAGE_DATA_URL_LENGTH) {
-    return c.json({ error: '图片过大，请换一张更小的自拍后再试' }, 400);
+    const prepared = await prepareIncomingDataUrl(imageDataUrl);
+    if (!prepared) {
+      return c.json({ error: PROCESS_FAILED_MSG }, 400);
+    }
+    imageDataUrl = prepared;
   }
 
   const apiKey = c.env.DASHSCOPE_API_KEY?.trim();
